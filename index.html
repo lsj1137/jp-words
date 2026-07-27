@@ -129,6 +129,12 @@
           font-variant-numeric:tabular-nums; letter-spacing:-.8px}
   .stat small{display:block; color:var(--dim2); font-size:14px; margin-top:6px; letter-spacing:-.2px}
   .bar{height:7px; background:var(--track); border-radius:99px; overflow:hidden}
+  /* 오늘 목표 — 연속 일수를 "앱을 열었나"가 아니라 "풀었나"로 만든다 */
+  .goal{display:flex; align-items:center; gap:10px; margin-top:12px; font-size:14px; color:var(--dim)}
+  .goal-track{flex:1; height:5px; background:var(--track); border-radius:99px; overflow:hidden}
+  .goal-track i{display:block; height:100%; border-radius:99px; background:var(--ok);
+                transition:width .5s cubic-bezier(.2,.7,.3,1)}
+  .goal.done{color:var(--ok-tx); font-weight:600}
   .bar i{display:block; height:100%; background:linear-gradient(90deg,var(--accent),var(--gold));
          border-radius:99px; transition:width .5s cubic-bezier(.2,.7,.3,1)}
 
@@ -160,7 +166,7 @@
   .mode[disabled]:hover{background:var(--card); transform:none; box-shadow:var(--lift-sm)}
 
   /* 모드 버튼 아래 여백 — 홈 맨 아래가 답답하지 않도록 */
-  #s-home .modes{padding-bottom:40px}
+  #s-home .modes{padding-bottom:6px}
 
   /* ---------- 설정 ---------- */
   .srow{display:flex; align-items:center; gap:12px; width:100%; padding:15px 14px; text-align:left;
@@ -203,6 +209,10 @@
   .qhint{font-size:14px; color:var(--dim2); margin-bottom:16px; letter-spacing:.2px}
   .qword{font-size:46px; font-weight:600; line-height:1.22; word-break:keep-all; letter-spacing:-.5px}
   .qword.ko{font-size:32px}
+  /* 예문 빈칸 — 문장이라 한 단어보다 작게 */
+  .qword.sent{font-size:25px; line-height:1.6; letter-spacing:0; font-weight:500}
+  .qword .blank{display:inline-block; min-width:2.6em; padding:0 .2em; border-radius:7px;
+                background:var(--accent-soft); color:var(--accent-tx)}
   .qread{margin-top:13px; font-size:16px; color:var(--dim); min-height:22px}
   /* 한글 발음 — .jp 글꼴 안에 섞여도 한글은 한글 글꼴로 나오게 */
   .krd{font-family:"Pretendard","Apple SD Gothic Neo","Noto Sans KR",-apple-system,system-ui,sans-serif;
@@ -307,9 +317,44 @@
   .ex .ko{font-size:14px; color:var(--dim2); margin-top:9px}
   .ex .none{font-size:14px; color:var(--dim2)}
 
+  /* ---------- 시험 ---------- */
+  .ecount{font-size:14px; color:var(--dim); font-variant-numeric:tabular-nums; flex:none}
+  .etype{font-size:14px; color:var(--dim2); letter-spacing:.2px; margin-bottom:14px}
+  .eq{font-size:38px; font-weight:600; line-height:1.3; word-break:keep-all;
+      letter-spacing:-.4px; margin-bottom:22px; min-height:52px}
+  .eq.sent{font-size:24px; line-height:1.6; font-weight:500; letter-spacing:0}
+  .eq .blank{display:inline-block; min-width:2.6em; padding:0 .2em; border-radius:7px;
+             background:var(--accent-soft); color:var(--accent-tx)}
+  /* 시험은 정답을 알려주지 않는다 — 고른 표시만 */
+  .choice.sel{background:var(--accent-soft); font-weight:600}
+  .choice.sel kbd{background:#0003}
+  .enav{display:flex; gap:8px; margin-top:auto; padding-top:20px; padding-bottom:6px}
+  .enav .btn:disabled{opacity:.35; cursor:default}
+  .escore{display:flex; align-items:baseline; justify-content:center; gap:6px; margin:8px 0 6px}
+  .escore b{font-size:66px; font-weight:700; line-height:1; letter-spacing:-3px;
+            font-variant-numeric:tabular-nums}
+  .escore span{font-size:18px; color:var(--dim)}
+  .ewrong{background:var(--bg2); border-radius:12px; padding:13px 14px; font-size:14px; line-height:1.6}
+  .ewrong + .ewrong{margin-top:7px}
+  .ewrong .q{color:var(--dim2); font-size:14px; margin-bottom:5px}
+  .ewrong .mine{color:var(--bad-tx)}
+  .ewrong .ans{color:var(--ok-tx); font-weight:600}
+
+  /* ---------- 발음 버튼 ---------- */
+  .spk{position:absolute; top:14px; left:14px; width:38px; height:38px; display:grid; place-items:center;
+       border-radius:11px; color:var(--dim2); background:var(--bg2); transition:.15s; z-index:2}
+  .spk:hover{color:var(--accent); background:var(--accent-soft)}
+  .spk:active{transform:scale(.92)}
+  .spk svg.i{width:18px; height:18px}
+  .spk.float{position:absolute; top:auto; bottom:74px; left:auto; right:8px; box-shadow:var(--lift-sm)}
+  /* 일본어 음성이 없는 기기에서는 발음 관련 UI를 통째로 숨긴다 */
+  :root.no-tts .spk, :root.no-tts .tts-only{display:none}
+  .no-tts-only{display:none}
+  :root.no-tts .no-tts-only{display:flex}
+
   /* ---------- 단어장 카드 모드 ----------
      한 화면에 한 단어. 좌우로 밀어 넘긴다. */
-  .deck{flex:1; display:flex; flex-direction:column; min-height:0; margin-top:14px; padding-bottom:4px}
+  .deck{flex:1; display:flex; flex-direction:column; min-height:0; margin-top:14px; padding-bottom:4px; position:relative}
   .dcard{flex:1; min-height:0; overflow:auto; position:relative; touch-action:pan-y;
          display:flex; flex-direction:column; text-align:center;
          background:linear-gradient(158deg, var(--s3), var(--card));
@@ -447,6 +492,10 @@
       <div class="stat"><b id="st-streak">0</b><small>연속 일수</small></div>
     </div>
     <div class="bar"><i id="st-bar" style="width:0"></i></div>
+    <div class="goal">
+      <span id="goal-tx">오늘 0 / 20</span>
+      <div class="goal-track"><i id="goal-bar"></i></div>
+    </div>
   </div>
 
   <div class="row">
@@ -486,6 +535,11 @@
       <span class="tx"><b>플래시카드</b><small>카드 뒤집고 안다/모른다</small></span>
       <span class="cnt">15장</span>
     </button>
+    <button class="mode" data-mode="cloze" id="mode-cloze">
+      <span class="ic"><svg class="i"><use href="#i-pencil"/></svg></span>
+      <span class="tx"><b>예문 빈칸</b><small>문장 속에서 단어 고르기</small></span>
+      <span class="cnt">10문제</span>
+    </button>
     <button class="mode" data-mode="review" id="mode-review">
       <span class="ic"><svg class="i"><use href="#i-repeat"/></svg></span>
       <span class="tx"><b>복습 (간격 반복)</b><small>틀렸거나 복습할 때가 된 단어만</small></span>
@@ -493,6 +547,54 @@
     </button>
   </div>
 
+
+  <div class="label">시험</div>
+  <div class="muted" style="margin:-2px 0 9px">채점은 마지막에 한 번 — 푸는 동안 정답은 알려주지 않습니다.</div>
+  <div class="seg" id="seg-exam" style="--count:3">
+    <i class="thumb"></i>
+    <button data-v="10" class="on">10문항</button>
+    <button data-v="20">20문항</button>
+    <button data-v="40">40문항</button>
+  </div>
+  <button class="btn primary" id="go-exam" style="margin-top:9px"><svg class="i"><use href="#i-list"/></svg> 시험 시작</button>
+</section>
+
+<!-- ═══════════ 시험 ═══════════ -->
+<section id="s-exam" class="screen">
+  <div class="head">
+    <button class="x" id="e-quit" aria-label="시험 그만두기"><svg class="i" style="width:20px;height:20px"><use href="#i-x"/></svg></button>
+    <h2>시험</h2>
+    <div class="ecount" id="e-count">1 / 10</div>
+  </div>
+  <div class="prog" style="flex:none;margin-bottom:20px"><i id="e-prog"></i></div>
+  <div class="etype" id="e-type"></div>
+  <div class="eq" id="e-q"></div>
+  <div class="choices" id="e-choices"></div>
+  <div class="typing" id="e-typebox" style="display:none">
+    <input class="field" id="e-input" placeholder="히라가나 또는 로마자" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <div class="kana" id="e-kana"></div>
+  </div>
+  <div class="enav">
+    <button class="btn ghost" style="flex:1" id="e-prev">이전</button>
+    <button class="btn primary" style="flex:1.4" id="e-next">다음</button>
+  </div>
+</section>
+
+<!-- ═══════════ 시험 결과 ═══════════ -->
+<section id="s-eresult" class="screen">
+  <div class="head"><h2>시험 결과</h2></div>
+  <div class="escore"><b id="er-score">0</b><span>점</span></div>
+  <div class="muted center" id="er-sub"></div>
+  <div class="label">유형별</div>
+  <div class="chart" id="er-types"></div>
+  <div id="er-wrongwrap">
+    <div class="label">틀린 문항 <span id="er-wrongn" style="color:var(--bad-tx)"></span></div>
+    <div id="er-wrong"></div>
+  </div>
+  <div class="row" style="margin:18px 0 40px">
+    <button class="btn" style="flex:1" id="er-home">홈으로</button>
+    <button class="btn primary" style="flex:1" id="er-again">다시 시험</button>
+  </div>
 </section>
 
 <!-- ═══════════ 퀴즈 ═══════════ -->
@@ -506,6 +608,7 @@
   <div class="combo" id="combo"></div>
 
   <div class="qcard" id="qcard">
+    <button class="spk" id="q-spk" aria-label="발음 듣기"><svg class="i"><use href="#i-volume-2"/></svg></button>
     <div class="qhint" id="qhint">뜻은?</div>
     <div class="qword jp" id="qword">—</div>
     <div class="qread jp hidden" id="qread"></div>
@@ -582,6 +685,7 @@
 
   <div class="deck" id="d-deck" style="display:none">
     <div class="dcard" id="dc"></div>
+    <button class="spk float" id="dc-spk" aria-label="발음 듣기"><svg class="i"><use href="#i-volume-2"/></svg></button>
     <div class="dmark">
       <button class="btn no" id="dc-no"><svg class="i"><use href="#i-x"/></svg> 모른다</button>
       <button class="btn yes" id="dc-yes"><svg class="i"><use href="#i-check"/></svg> 안다</button>
@@ -644,6 +748,15 @@
       <span class="t">테마<small>다크 / 라이트 전환</small></span>
       <span class="v" id="v-theme">다크</span>
     </button>
+    <button class="srow tts-only" id="tg-tts">
+      <svg class="i"><use href="#i-volume-2"/></svg>
+      <span class="t">발음 자동 재생<small>정답이 공개될 때 일본어 발음을 들려줍니다</small></span>
+      <span class="v" id="v-tts">켬</span>
+    </button>
+    <div class="srow no-tts-only" style="cursor:default">
+      <svg class="i"><use href="#i-volume-x"/></svg>
+      <span class="t">발음 재생 불가<small>이 기기에 일본어 음성이 설치되어 있지 않습니다</small></span>
+    </div>
     <button class="srow" id="tg-sound">
       <svg class="i"><use href="#i-volume-2" id="ic-sound"/></svg>
       <span class="t">효과음<small>정답 · 오답 소리</small></span>
@@ -660,6 +773,12 @@
       <svg class="i"><use href="#i-pencil"/></svg>
       <span class="t">타이핑 입력 대상<small>타이핑 모드에서 무엇을 적을지</small></span>
       <span class="v" id="v-input">뜻</span>
+    </button>
+
+    <button class="srow" id="tg-goal">
+      <svg class="i"><use href="#i-target"/></svg>
+      <span class="t">하루 목표<small>홈 화면의 진행 막대 기준</small></span>
+      <span class="v" id="v-goal">20문제</span>
     </button>
 
     <div class="label">백업 · 기기 이동</div>
@@ -732,7 +851,7 @@ let history  = DB.get('history', {});    // "YYYY-MM-DD" -> [푼 문제, 맞은 
 let custom   = DB.get('custom', []);     // 사용자 추가 [w,r,m,lv]
 let removed  = DB.get('removed', []);    // 삭제한 key
 let opt      = Object.assign(
-  {level:'all', dir:'jp', sound:true, timer:true, input:'m', theme:'dark', urlsync:false, dictview:'list'},
+  {level:'all', dir:'jp', sound:true, timer:true, input:'m', theme:'dark', urlsync:false, dictview:'list', tts:true, examN:'10', goal:20},
   DB.get('opt', {}));
 
 const save = () => {
@@ -762,9 +881,15 @@ const MASTER = 4;   // box 4 이상이면 "외웠다"
 
 function grade(k, ok){
   const p = prg(k);
-  if(ok){ p.box = Math.min(5, p.box+1); p.r++ }
-  else  { p.box = 0; p.w++ }
-  p.due = NOW() + GAP[p.box];
+  if(ok){
+    p.box = Math.min(5, p.box+1); p.r++;
+    p.due = NOW() + GAP[p.box];
+  }else{
+    // 한 번 틀렸다고 처음으로 되돌리면 이미 쌓은 간격이 통째로 날아간다.
+    // 두 단계만 내리고, 대신 곧바로 다시 만나게 한다.
+    p.box = Math.max(0, p.box - 2); p.w++;
+    p.due = NOW() + GAP[0];
+  }
   progress[k] = p;
   return p;
 }
@@ -932,6 +1057,10 @@ function renderHome(){
   $('st-mast').textContent = mast;
   $('st-learn').textContent = learn;
   $('st-today').textContent = stats.today||0;
+  const done = stats.today||0, goal = opt.goal||20, hit = done >= goal;
+  $('goal-tx').textContent = hit ? `오늘 목표 달성 · ${done}문제` : `오늘 ${done} / ${goal}`;
+  $('goal-bar').style.width = Math.min(100, done/goal*100) + '%';
+  document.querySelector('.goal').classList.toggle('done', hit);
   $('st-streak').textContent = stats.streak||0;
   $('st-bar').style.width = (p.length ? mast/p.length*100 : 0)+'%';
 
@@ -941,6 +1070,7 @@ function renderHome(){
 
   setSeg('seg-level', opt.level);
   setSeg('seg-dir',   opt.dir);
+  setSeg('seg-exam',  opt.examN);
 }
 function applyTheme(){ document.documentElement.dataset.theme = opt.theme }
 
@@ -963,6 +1093,8 @@ function renderSettings(){
   ic('ic-timer', opt.timer ? 'timer' : 'timer-off');
   $('v-input').textContent   = opt.input==='m' ? '뜻' : '읽기';
   $('v-urlsync').textContent = opt.urlsync ? '켬' : '끔';
+  $('v-tts').textContent     = opt.tts ? '켬' : '끔';
+  $('v-goal').textContent    = (opt.goal||20) + '문제';
   $('v-exportinfo').textContent =
     `진도 ${Object.keys(progress).length}개 · 내 단어 ${custom.length}개`;
   $('v-wordinfo').textContent =
@@ -981,12 +1113,189 @@ $('set-back').onclick     = ()=>{ renderHome(); show('s-home') };
 document.querySelectorAll('.mode').forEach(b => b.onclick = () => start(b.dataset.mode));
 
 /* ══════════════════════════════════════════════════════════
+   시험 — 게임이 아니라 측정. 푸는 동안 정답을 알려주지 않고
+   마지막에 한 번 채점한다. 네 가지 문항 유형을 섞는다.
+   ══════════════════════════════════════════════════════════ */
+const ETYPE = {
+  mean:  {label:'뜻',   hint:'알맞은 뜻을 고르세요'},
+  word:  {label:'단어', hint:'알맞은 단어를 고르세요'},
+  cloze: {label:'빈칸', hint:'빈칸에 들어갈 단어를 고르세요'},
+  read:  {label:'읽기', hint:'읽기를 히라가나로 쓰세요 (로마자도 됩니다)'}
+};
+let EXM = null;
+
+function buildExam(n){
+  const p = pool();
+  if(p.length < 4) return null;
+  const items = shuffle(p.slice()).slice(0, Math.min(n, p.length))
+                  .map(w => ({w, type:'mean', pick:null, input:''}));
+  // 예문이 있는 문항 중 1/4 을 빈칸으로
+  shuffle(items.map((it,i)=>i).filter(i => hasEx(items[i].w)))
+    .slice(0, Math.round(items.length * .25))
+    .forEach(i => items[i].type = 'cloze');
+  const rot = ['mean','read','word']; let t = 0;
+  items.forEach(it => { if(it.type !== 'cloze') it.type = rot[t++ % 3] });
+  items.forEach(it => {
+    if(it.type !== 'read') it.choices = shuffle([it.w, ...distractors(it.w, key(it.w), 3)]);
+  });
+  return shuffle(items);
+}
+
+function startExam(){
+  const items = buildExam(+opt.examN);
+  if(!items){ toast('단어가 부족해요 — 범위를 넓혀보세요'); return }
+  EXM = { items, i:0 };
+  touchDay();
+  show('s-exam');
+  renderExam();
+}
+
+function saveExamInput(){
+  const it = EXM.items[EXM.i];
+  if(it.type === 'read') it.input = $('e-input').value;
+}
+
+function renderExam(){
+  const it = EXM.items[EXM.i], n = EXM.items.length, meta = ETYPE[it.type];
+  $('e-count').textContent = `${EXM.i+1} / ${n}`;
+  $('e-prog').style.width = (EXM.i / n * 100) + '%';
+  $('e-type').textContent = meta.label + ' · ' + meta.hint;
+
+  const q = $('e-q'); q.className = 'eq';
+  if(it.type === 'word'){ q.textContent = it.w.m }
+  else if(it.type === 'cloze'){ q.classList.add('jp','sent'); q.innerHTML = blankSentence(it.w) }
+  else { q.classList.add('jp'); q.textContent = it.w.w }
+
+  if(it.type === 'read'){
+    $('e-choices').style.display = 'none';
+    $('e-typebox').style.display = '';
+    const inp = $('e-input'); inp.value = it.input || '';
+    $('e-kana').textContent = it.input ? romaji(it.input) : '';
+    setTimeout(()=>inp.focus(), 30);
+  }else{
+    $('e-typebox').style.display = 'none';
+    $('e-choices').style.display = 'grid';
+    const showJa = it.type !== 'mean';
+    $('e-choices').innerHTML = it.choices.map((o,idx) =>
+      `<button class="choice ${showJa?'jp':''} ${it.pick===key(o)?'sel':''}" data-k="${key(o)}">
+         <kbd>${idx+1}</kbd><span>${esc(showJa ? o.w : o.m)}</span></button>`).join('');
+    $('e-choices').querySelectorAll('.choice').forEach(b =>
+      b.onclick = () => { it.pick = b.dataset.k; renderExam() });
+  }
+  $('e-prev').disabled = EXM.i === 0;
+  $('e-next').textContent = EXM.i === n-1 ? '제출' : '다음';
+}
+
+const examCorrect = it => {
+  if(it.type !== 'read') return it.pick === key(it.w);
+  const tries = [normKana(it.input), normKana(romaji(it.input))];
+  return !!it.input.trim() && (tries.includes(normKana(it.w.r)) || tries.includes(normKana(it.w.w)));
+};
+
+function submitExam(){
+  let right = 0; const byType = {}, wrong = [];
+  EXM.items.forEach(it => {
+    const k = key(it.w), ok = examCorrect(it);
+    it.ok = ok;
+    if(ok) right++; else wrong.push(it);
+    (byType[it.type] = byType[it.type] || {n:0, r:0}).n++;
+    if(ok) byType[it.type].r++;
+    grade(k, ok);                  // 시험 결과도 학습 기록에 반영한다
+    logAnswer(ok, false);
+  });
+  save(); syncURL();
+
+  const n = EXM.items.length, score = Math.round(right / n * 100);
+  $('er-score').textContent = score;
+  $('er-sub').textContent = `${n}문항 중 ${right}개 정답`;
+  $('er-types').innerHTML = Object.keys(ETYPE).filter(t => byType[t])
+    .map(t => meter(ETYPE[t].label, byType[t].r, byType[t].n)).join('');
+  $('er-wrongwrap').style.display = wrong.length ? '' : 'none';
+  $('er-wrongn').textContent = wrong.length + '개';
+  $('er-wrong').innerHTML = wrong.map(it => {
+    // '뜻' 유형은 보기가 한국어였으므로 내 답·정답도 한국어로 보여줘야 한다
+    const label = x => it.type === 'mean' ? x.m : x.w;
+    const mine = it.type === 'read'
+      ? (it.input.trim() || '(무응답)')
+      : (it.pick ? label(ALL.find(x => key(x) === it.pick) || {w:'?', m:'?'}) : '(무응답)');
+    const ans = it.type === 'read' ? it.w.r : label(it.w);
+    return `<div class="ewrong">
+      <div class="q">${ETYPE[it.type].label} · ${esc(it.type==='word' ? it.w.m : it.w.w)}</div>
+      <span class="mine">내 답 ${esc(mine)}</span> &nbsp;·&nbsp;
+      <span class="ans">정답 ${esc(ans)}</span>
+      <div class="muted" style="margin-top:4px">${esc(it.w.w)} · ${esc(it.w.r)} · ${esc(it.w.m)}</div>
+    </div>`;
+  }).join('');
+  if(score >= 80) beep('win');
+  show('s-eresult');
+}
+
+$('seg-exam').onclick = e => {
+  const b = e.target.closest('button'); if(!b) return;
+  opt.examN = b.dataset.v; save(); setSeg('seg-exam', opt.examN);
+};
+$('go-exam').onclick  = startExam;
+$('e-prev').onclick   = ()=>{ saveExamInput(); if(EXM.i > 0){ EXM.i--; renderExam() } };
+$('e-next').onclick   = ()=>{
+  saveExamInput();
+  if(EXM.i < EXM.items.length - 1){ EXM.i++; renderExam(); return }
+  const un = EXM.items.filter(it => it.type==='read' ? !it.input.trim() : !it.pick).length;
+  if(un && !confirm(`아직 답하지 않은 문항이 ${un}개 있습니다.\n제출할까요?`)) return;
+  submitExam();
+};
+$('e-quit').onclick   = ()=>{ if(confirm('시험을 그만두면 지금까지 푼 답이 사라집니다.')){ EXM=null; renderHome(); show('s-home') } };
+$('e-input').addEventListener('input', e => {
+  EXM.items[EXM.i].input = e.target.value;
+  $('e-kana').textContent = romaji(e.target.value);
+});
+$('e-input').addEventListener('keydown', e => { if(e.key==='Enter') $('e-next').click() });
+$('er-home').onclick  = ()=>{ EXM=null; renderHome(); show('s-home') };
+$('er-again').onclick = startExam;
+
+/* ══════════════════════════════════════════════════════════
+   발음 — Web Speech API (브라우저 내장, 외부 의존성 없음)
+   일본어 음성이 깔려 있지 않은 기기가 있어서 없으면 조용히 기능을 감춘다.
+   ══════════════════════════════════════════════════════════ */
+let jaVoice = null, ttsReady = false;
+function pickVoice(){
+  if(!('speechSynthesis' in window)) return;
+  const vs = speechSynthesis.getVoices();
+  if(!vs.length) return;                       // 크롬은 처음에 빈 배열을 준다
+  jaVoice = vs.find(v => v.lang === 'ja-JP') || vs.find(v => v.lang.startsWith('ja')) || null;
+  ttsReady = true;
+  document.documentElement.classList.toggle('no-tts', !jaVoice);
+}
+if('speechSynthesis' in window){
+  pickVoice();
+  speechSynthesis.addEventListener('voiceschanged', pickVoice);
+} else {
+  document.documentElement.classList.add('no-tts');
+}
+const canSpeak = () => !!jaVoice;
+function speak(text){
+  if(!jaVoice || !text) return;
+  try{
+    speechSynthesis.cancel();                  // 앞 발화가 밀리지 않게
+    const u = new SpeechSynthesisUtterance(text);
+    u.voice = jaVoice; u.lang = jaVoice.lang; u.rate = .9;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+/* 한자 표기 대신 읽기(가나)를 읽힌다 — 음성 엔진이 한자를 오독하는 경우가 있다 */
+const speakWord = w => speak(w && (w.r || w.w));
+
+/* ══════════════════════════════════════════════════════════
    세션
    ══════════════════════════════════════════════════════════ */
 let S = null;   // 현재 세션
 
+/* 예문 안에 표제어가 그대로 들어 있어야 빈칸을 뚫을 수 있다 */
+const exOf   = w => EXAMPLES[w.w];
+const hasEx  = w => { const e = exOf(w); return !!(e && e[0] && e[0].includes(w.w)) };
+const clozePool = () => pool().filter(hasEx);
+
 function pickQuestions(mode, n){
-  const p = pool();
+  const p = mode==='cloze' ? clozePool() : pool();
   if(mode==='review'){ return shuffle(dueList()).slice(0, Math.max(n, 20)) }
   // 가중치: 안 본 단어 & 자주 틀린 단어 우선
   const scored = p.map(w => {
@@ -1007,8 +1316,9 @@ function start(mode){
   const n = mode==='flash' ? 15 : 10;
   const qs = pickQuestions(mode, n);
   if(!qs.length){ toast('단어가 없어요'); return }
-  S = { mode, kind: mode==='flash'?'flash':(mode==='type'?'type':'quiz'),
-        qs, i:0, score:0, combo:0, maxCombo:0, right:0, wrong:[], newMast:0, locked:false };
+  S = { mode, kind: mode==='flash'?'flash':(mode==='type'?'type':(mode==='cloze'?'cloze':'quiz')),
+        qs, i:0, score:0, combo:0, maxCombo:0, right:0, wrong:[], newMast:0, locked:false,
+        firstTotal: qs.length, seen:new Set(), requeued:new Set(), isRetest:false };
   touchDay();
   show('s-play');
   next();
@@ -1017,7 +1327,7 @@ function start(mode){
 function endSession(){
   clearInterval(S.timerId);
   save();
-  const total = S.qs.length;
+  const total = S.firstTotal || S.qs.length;   // 재출제분은 정답률에서 제외
   $('r-title').textContent = S.mode==='review' ? '복습 완료' : (S.kind==='flash' ? '플래시카드 완료' : '세션 종료');
   $('r-score').textContent = S.kind==='flash' ? S.right+' / '+total : S.score;
   $('r-acc').textContent = Math.round(S.right/total*100)+'%';
@@ -1038,6 +1348,8 @@ function next(){
   if(S.i >= S.qs.length){ endSession(); return }
   const w = S.qs[S.i], k = key(w);
   S.cur = w; S.locked = false; S.startBox = prg(k).box;
+  S.isRetest = S.seen.has(k);          // 아까 틀려서 다시 나온 문항
+  if(!S.isRetest) S.seen.add(k);
 
   $('prog').style.width = (S.i / S.qs.length * 100)+'%';
   $('score').textContent = S.kind==='flash' ? (S.i+1)+'/'+S.qs.length : S.score;
@@ -1075,22 +1387,62 @@ function next(){
     return;
   }
 
-  // 4지선다
+  // 4지선다 · 예문 빈칸
   $('choices').style.display='grid'; $('typebox').style.display='none'; $('qfoot').style.display='none';
-  qw.textContent = jp2ko ? w.w : w.m;
-  $('qhint').textContent = jp2ko ? '뜻은?' : '어떤 단어?';
+  const cloze = S.kind==='cloze';
+  qw.classList.toggle('sent', cloze);
+  if(cloze){
+    qw.innerHTML = blankSentence(w);
+    $('qhint').textContent = '빈칸에 들어갈 단어는?' + (S.isRetest ? ' · 다시' : '');
+  }else{
+    qw.textContent = jp2ko ? w.w : w.m;
+    $('qhint').textContent = (jp2ko ? '뜻은?' : '어떤 단어?') + (S.isRetest ? ' · 다시' : '');
+  }
 
-  const p = pool().length >= 8 ? pool() : ALL;
-  const same = p.filter(x => x.lv===w.lv && key(x)!==k && x.m!==w.m && x.w!==w.w);
-  const src  = same.length >= 3 ? same : p.filter(x => key(x)!==k && x.m!==w.m);
-  const dist = shuffle(src.slice()).slice(0,3);
-  const opts = shuffle([w, ...dist]);
+  const opts = shuffle([w, ...distractors(w, k, 3)]);
 
+  const showJa = cloze || !jp2ko;
   $('choices').innerHTML = opts.map((o,idx) =>
-    `<button class="choice ${jp2ko?'':'jp'}" data-k="${key(o)}">
-       <kbd>${idx+1}</kbd><span>${jp2ko ? o.m : o.w}</span></button>`).join('');
+    `<button class="choice ${showJa?'jp':''}" data-k="${key(o)}">
+       <kbd>${idx+1}</kbd><span>${esc(showJa ? o.w : o.m)}</span></button>`).join('');
   $('choices').querySelectorAll('.choice').forEach(b => b.onclick = () => answer(b.dataset.k===k, b));
   runTimer(10);
+}
+
+/* 예문에서 표제어를 빈칸으로 — 문맥까지 같이 외워진다 */
+function blankSentence(w){
+  const e = exOf(w);
+  if(!e) return esc(w.m);
+  return esc(e[0]).replace(esc(w.w), '<span class="blank">◯◯</span>');
+}
+
+/* 오답 보기 — 무작위로 뽑으면 소거법으로 찍히니, '헷갈리는' 쪽을 고른다.
+   한자를 공유하거나 소리가 비슷하면 실제로 구별해야 하는 지점을 짚게 된다. */
+const KANJI = /[\u4e00-\u9faf]/;
+function distractors(w, k, n){
+  const p = pool().length >= 8 ? pool() : ALL;
+  const cands = p.filter(x => key(x)!==k && x.m!==w.m && x.w!==w.w);
+  if(cands.length <= n) return cands.slice(0, n);
+  const chars = new Set([...w.w].filter(c => KANJI.test(c)));
+  const scored = cands.map(x => {
+    let s = Math.random() * .9;
+    if(x.lv === w.lv) s += .5;                                        // 같은 급수
+    if(chars.size && [...x.w].some(c => chars.has(c))) s += 2.2;      // 한자를 공유
+    if(x.r[0] === w.r[0]) s += .9;                                    // 같은 소리로 시작
+    if(Math.abs(x.r.length - w.r.length) <= 1) s += .4;               // 길이가 비슷
+    if(x.w.slice(-1) === w.w.slice(-1)) s += .6;                      // 같은 어미(〜い·〜る)
+    return {x, s};
+  });
+  scored.sort((a,b) => b.s - a.s);
+  // 상위권에서 다시 무작위로 골라, 헷갈리되 매번 같지는 않게
+  return shuffle(scored.slice(0, Math.max(n * 4, 12))).slice(0, n).map(o => o.x);
+}
+
+/* 틀린 문항은 같은 세션 안에서 한 번 더 — 정답률·SRS 에는 두 번 세지 않는다 */
+function requeue(w, k){
+  if(S.requeued.has(k)) return;
+  S.requeued.add(k);
+  S.qs.splice(Math.min(S.i + 3, S.qs.length), 0, w);
 }
 
 /* ---------- 타이머 ---------- */
@@ -1130,15 +1482,20 @@ function answer(ok, el, timeout){
     S.wrong.push(w);
     beep('bad');
   }
-  const p = grade(k, ok);
-  const newly = ok && S.startBox < MASTER && p.box >= MASTER;
-  if(newly) S.newMast++;
-  logAnswer(ok, newly);
+  if(!S.isRetest){
+    const p = grade(k, ok);
+    const newly = ok && S.startBox < MASTER && p.box >= MASTER;
+    if(newly) S.newMast++;
+    logAnswer(ok, newly);
+    if(!ok) requeue(w, k);
+  }
 
   $('score').textContent = S.score;
   $('qcard').classList.add(ok?'flash-ok':'flash-bad');
   $('qread').innerHTML = readLine(w);
   $('qread').classList.remove('hidden');
+  if(S.kind==='cloze'){ const e=exOf(w); if(e) $('qword').innerHTML = esc(e[0]); }
+  if(opt.tts) speakWord(w);
 
   if(S.kind==='quiz'){
     $('choices').querySelectorAll('.choice').forEach(b=>{
@@ -1178,18 +1535,25 @@ $('typein').addEventListener('keydown', e=>{
 });
 
 /* ---------- 플래시카드 ---------- */
-$('qcard').onclick = ()=>{ if(S && S.kind==='flash') { $('qcard').classList.toggle('flipped'); $('qread').classList.toggle('hidden') } };
+$('qcard').onclick = ()=>{
+  if(!S || S.kind!=='flash') return;
+  $('qcard').classList.toggle('flipped');
+  const shown = !$('qread').classList.toggle('hidden');
+  if(shown && opt.tts) speakWord(S.cur);
+};
 $('f-yes').onclick = ()=> flashAns(true);
 $('f-no').onclick  = ()=> flashAns(false);
 function flashAns(ok){
   if(S.locked) return;
   S.locked = true;
   const w = S.cur, k = key(w);
-  const p = grade(k, ok);
-  const newly = ok && S.startBox < MASTER && p.box >= MASTER;
-  if(ok){ S.right++; S.combo++; S.maxCombo=Math.max(S.maxCombo,S.combo); if(newly) S.newMast++ }
-  else { S.combo=0; S.wrong.push(w) }
-  logAnswer(ok, newly);
+  if(!S.isRetest){                       // 재출제 카드는 두 번 세지 않는다
+    const p = grade(k, ok);
+    const newly = ok && S.startBox < MASTER && p.box >= MASTER;
+    if(ok){ S.right++; S.combo++; S.maxCombo=Math.max(S.maxCombo,S.combo); if(newly) S.newMast++ }
+    else { S.combo=0; S.wrong.push(w); requeue(w, k) }
+    logAnswer(ok, newly);
+  }
   beep(ok?'ok':'bad');
   S.i++;
   setTimeout(next, 180);
@@ -1323,10 +1687,13 @@ function renderStat(){
     rows.map(([n,[d,t]])=>meter(n, d, t)).join('')));
 
   /* ── 6. 자주 틀리는 단어 ── */
+  // 단순 오답 횟수로 줄세우면 '많이 본 단어'가 올라온다.
+  // 맞은 횟수를 뺀 순 오답으로 정렬해야 실제로 발목 잡는 단어가 보인다.
   const weak = all.map(w=>({w, q:prg(key(w))})).filter(o=>o.q.w > 0)
-    .sort((a,b)=> b.q.w - a.q.w || a.q.r - b.q.r).slice(0,8);
-  const maxW = weak.length ? weak[0].q.w : 0;
-  out.push(card('자주 틀리는 단어', weak.length ? '틀린 횟수 기준 상위 8개' : null,
+    .sort((a,b)=> (b.q.w - b.q.r) - (a.q.w - a.q.r) || b.q.w - a.q.w).slice(0,10);
+  const maxW = weak.length ? Math.max(...weak.map(o=>o.q.w)) : 0;
+  out.push(card('자주 틀리는 단어',
+    weak.length ? '틀린 횟수에서 맞은 횟수를 뺀 순 — 여기부터 잡으면 효율이 좋아요' : null,
     weak.length
       ? weak.map(o=>hbar(o.w.w + ' ' + o.w.m, o.q.w, maxW, 'var(--sq4)', 'jp')).join('')
       : none('아직 틀린 단어가 없어요.')));
@@ -1444,6 +1811,15 @@ function renderCard(dir){
   }
 }
 const cardStep = d => { if(deck.length){ deckI += d; renderCard(d) } };
+
+$('q-spk').onclick  = e => { e.stopPropagation(); speakWord(S && S.cur) };
+$('dc-spk').onclick = ()=> { if(deck.length) speakWord(deck[deckI]) };
+const GOALS = [10, 20, 30, 50, 100];
+$('tg-goal').onclick = ()=>{
+  opt.goal = GOALS[(GOALS.indexOf(opt.goal||20) + 1) % GOALS.length];
+  save(); renderSettings(); renderHome();
+};
+$('tg-tts').onclick = ()=> { opt.tts = !opt.tts; save(); renderSettings(); if(opt.tts) speak('はい') };
 
 $('dc-prev').onclick = ()=> cardStep(-1);
 $('dc-next').onclick = ()=> cardStep(1);
