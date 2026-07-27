@@ -117,12 +117,11 @@
   .brand .iconbtn{align-self:center}
 
   /* 통계 + 숙련도 막대는 하나의 우묵한 판 위에 — 낱개 상자 4개로 흩어놓지 않는다 */
-  /* ---------- 단(段) 랭크 ---------- */
+  /* ---------- 급/단 랭크 ---------- */
   .rankbar{background:linear-gradient(158deg, var(--s3), var(--card)); border-radius:var(--r);
            box-shadow:var(--lift); padding:15px 18px 14px; margin-bottom:9px}
   .rk{display:flex; align-items:baseline; gap:10px}
-  .rk b{font-size:26px; font-weight:600; letter-spacing:-.5px;
-        font-family:"Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo","Noto Sans JP",sans-serif}
+  .rk b{font-size:26px; font-weight:600; letter-spacing:-.5px}
   .rk span{font-size:14px; color:var(--dim); font-variant-numeric:tabular-nums; margin-left:auto}
   .rk-track{height:6px; background:var(--track); border-radius:99px; overflow:hidden; margin:11px 0 7px}
   .rk-track i{display:block; height:100%; border-radius:99px;
@@ -277,8 +276,7 @@
   .rpd{font-size:19px; font-weight:700; font-variant-numeric:tabular-nums}
   .rpd.up{color:var(--ok-tx)} .rpd.down{color:var(--bad-tx)}
   .rpt{font-size:14px; color:var(--dim); margin-top:3px}
-  .rpt b{color:var(--fg); font-weight:600;
-         font-family:"Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo","Noto Sans JP",sans-serif}
+  .rpt b{color:var(--fg); font-weight:600}
   .tierup{color:var(--gold-tx); font-weight:700}
   .newbest{color:var(--gold-tx); font-weight:600}
 
@@ -1186,14 +1184,13 @@ $('set-back').onclick     = ()=>{ renderHome(); show('s-home') };
 document.querySelectorAll('.mode').forEach(b => b.onclick = () => start(b.dataset.mode));
 
 /* ══════════════════════════════════════════════════════════
-   단(段) — 랭크 포인트
+   급/단 — 랭크 포인트
    시간이 지나면 조금씩 깎이므로 유지하려면 계속 와야 한다.
-   급수·단수는 일본에서 실제로 쓰는 등급 체계라 주제와도 맞는다.
    ══════════════════════════════════════════════════════════ */
 const TIERS = [
-  [0,'10級'],[80,'9級'],[160,'8級'],[250,'7級'],[350,'6級'],[460,'5級'],
-  [580,'4級'],[720,'3級'],[880,'2級'],[1060,'1級'],
-  [1260,'初段'],[1500,'二段'],[1800,'三段'],[2200,'四段'],[2700,'五段']
+  [0,'10급'],[80,'9급'],[160,'8급'],[250,'7급'],[350,'6급'],[460,'5급'],
+  [580,'4급'],[720,'3급'],[880,'2급'],[1060,'1급'],
+  [1260,'초단'],[1500,'2단'],[1800,'3단'],[2200,'4단'],[2700,'5단']
 ];
 const DECAY_PER_HOUR = 0.005;          // 시간당 0.5% → 하루 약 −11%
 
