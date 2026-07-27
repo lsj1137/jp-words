@@ -117,6 +117,19 @@
   .brand .iconbtn{align-self:center}
 
   /* 통계 + 숙련도 막대는 하나의 우묵한 판 위에 — 낱개 상자 4개로 흩어놓지 않는다 */
+  /* ---------- 단(段) 랭크 ---------- */
+  .rankbar{background:linear-gradient(158deg, var(--s3), var(--card)); border-radius:var(--r);
+           box-shadow:var(--lift); padding:15px 18px 14px; margin-bottom:9px}
+  .rk{display:flex; align-items:baseline; gap:10px}
+  .rk b{font-size:26px; font-weight:600; letter-spacing:-.5px;
+        font-family:"Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo","Noto Sans JP",sans-serif}
+  .rk span{font-size:14px; color:var(--dim); font-variant-numeric:tabular-nums; margin-left:auto}
+  .rk-track{height:6px; background:var(--track); border-radius:99px; overflow:hidden; margin:11px 0 7px}
+  .rk-track i{display:block; height:100%; border-radius:99px;
+              background:linear-gradient(90deg, var(--sq4), var(--gold));
+              transition:width .6s cubic-bezier(.2,.7,.3,1)}
+  .rk-next{font-size:14px; color:var(--dim2)}
+
   .statpanel{background:linear-gradient(158deg, var(--s3), var(--card));
              border-radius:var(--r); box-shadow:var(--lift);
              padding:18px 18px 16px; margin-bottom:20px}
@@ -250,6 +263,25 @@
   .qfoot{margin-top:auto; padding-top:16px}
 
   /* ---------- 결과 ---------- */
+  /* ---------- 세션 등급 ---------- */
+  .gradebox{display:flex; align-items:center; justify-content:center; gap:14px; margin:14px 0 10px}
+  .grade{width:66px; height:66px; flex:none; display:grid; place-items:center; border-radius:20px;
+         font-size:34px; font-weight:700; letter-spacing:-1px; color:#fff;
+         background:var(--dim2); animation:pop .34s ease-out}
+  .grade.g-S{background:linear-gradient(145deg, var(--gold), var(--accent-fill))}
+  .grade.g-A{background:var(--accent-fill)}
+  .grade.g-B{background:var(--ok); color:#fff}
+  .grade.g-C{background:var(--dim)}
+  .grade.g-D{background:var(--dim2)}
+  .gmeta{text-align:left}
+  .rpd{font-size:19px; font-weight:700; font-variant-numeric:tabular-nums}
+  .rpd.up{color:var(--ok-tx)} .rpd.down{color:var(--bad-tx)}
+  .rpt{font-size:14px; color:var(--dim); margin-top:3px}
+  .rpt b{color:var(--fg); font-weight:600;
+         font-family:"Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo","Noto Sans JP",sans-serif}
+  .tierup{color:var(--gold-tx); font-weight:700}
+  .newbest{color:var(--gold-tx); font-weight:600}
+
   .big{font-size:56px; font-weight:700; text-align:center; font-variant-numeric:tabular-nums;
        line-height:1.05; letter-spacing:-2px}
   .rgrid{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:22px 0}
@@ -437,6 +469,32 @@
          font-size:14px; opacity:0; pointer-events:none; transition:.22s; z-index:9}
   .toast.on{opacity:1; transform:translateX(-50%) translateY(0)}
 
+  /* ---------- 타격감 ---------- */
+  /* 획득 점수가 고른 보기에서 떠오른다 — 숫자가 조용히 바뀌는 것과 체감이 다르다 */
+  .gain{position:fixed; z-index:20; pointer-events:none; font-size:22px; font-weight:700;
+        font-variant-numeric:tabular-nums; color:var(--ok-tx); text-shadow:0 2px 8px #0006;
+        animation:gainUp .85s cubic-bezier(.2,.8,.3,1) forwards}
+  .gain.big{font-size:27px; color:var(--gold-tx)}
+  @keyframes gainUp{
+    0%  {opacity:0; transform:translate(-50%,-20%) scale(.6)}
+    22% {opacity:1; transform:translate(-50%,-85%) scale(1.18)}
+    100%{opacity:0; transform:translate(-50%,-230%) scale(1)}
+  }
+  /* 콤보는 단계로 올라간다 — 3에서 끝나면 후반에 잃을 게 없다 */
+  .combo.t1{color:var(--gold-tx)}
+  .combo.t2{color:var(--accent-tx); font-size:16px; letter-spacing:1px}
+  .combo.fever{color:var(--accent-tx); font-size:18px; letter-spacing:2px; font-weight:800;
+               animation:feverPulse .66s ease-in-out infinite}
+  @keyframes feverPulse{0%,100%{transform:scale(1)} 50%{transform:scale(1.08)}}
+  .qcard.fever{box-shadow:var(--lift), 0 0 34px -6px var(--accent)}
+  .qcard.flash-ok{animation:hit .3s ease-out}
+  @keyframes hit{0%{transform:scale(1)} 38%{transform:scale(1.022)} 100%{transform:scale(1)}}
+  .qcard.flash-bad{animation:miss .3s ease-out}
+  @keyframes miss{0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)}}
+  /* 마지막 3초 */
+  .timer.urgent{animation:tick .45s steps(2,end) infinite}
+  @keyframes tick{0%,100%{opacity:1} 50%{opacity:.35}}
+
   @keyframes pop{0%{transform:scale(.9)}60%{transform:scale(1.04)}100%{transform:scale(1)}}
   .pop{animation:pop .22s ease-out}
 </style>
@@ -482,6 +540,12 @@
   <div class="brand">
     <h1 class="jp">単<em>語</em></h1><span style="flex:1">tango</span>
     <button class="iconbtn" id="go-settings" title="설정" aria-label="설정"><svg class="i"><use href="#i-settings"/></svg></button>
+  </div>
+
+  <div class="rankbar">
+    <div class="rk"><b id="rk-tier">10級</b><span id="rk-rp">0 RP</span></div>
+    <div class="rk-track"><i id="rk-bar"></i></div>
+    <div class="rk-next" id="rk-next"></div>
   </div>
 
   <div class="statpanel">
@@ -634,7 +698,15 @@
 <section id="s-result" class="screen">
   <div style="margin:auto 0">
     <div class="muted center" id="r-title">세션 종료</div>
+    <div class="gradebox">
+      <div class="grade" id="r-grade">A</div>
+      <div class="gmeta">
+        <div class="rpd" id="r-rp"></div>
+        <div class="rpt" id="r-tier"></div>
+      </div>
+    </div>
     <div class="big pop" id="r-score">0</div>
+    <div class="muted center" id="r-best" style="margin-top:-2px"></div>
     <div class="rgrid">
       <div class="stat"><b id="r-acc">0%</b><small>정답률</small></div>
       <div class="stat"><b id="r-combo">0</b><small>최대 콤보</small></div>
@@ -846,7 +918,7 @@ const DB = {
   set(k, v){ localStorage.setItem('jw.'+k, JSON.stringify(v)) }
 };
 let progress = DB.get('progress', {});   // key -> {box, due, r, w}
-let stats    = DB.get('stats', {best:0, day:'', today:0, streak:0, lastDay:''});
+let stats    = DB.get('stats', {best:0, day:'', today:0, streak:0, lastDay:'', rp:0, rpAt:0, bestBy:{}});
 let history  = DB.get('history', {});    // "YYYY-MM-DD" -> [푼 문제, 맞은 수, 새로 외운 수]
 let custom   = DB.get('custom', []);     // 사용자 추가 [w,r,m,lv]
 let removed  = DB.get('removed', []);    // 삭제한 key
@@ -1068,6 +1140,7 @@ function renderHome(){
   $('due-cnt').textContent = d+'개';
   $('mode-review').disabled = d===0;
 
+  renderRank();
   setSeg('seg-level', opt.level);
   setSeg('seg-dir',   opt.dir);
   setSeg('seg-exam',  opt.examN);
@@ -1111,6 +1184,56 @@ $('tg-theme').onclick  = () => { opt.theme = opt.theme==='dark'?'light':'dark'; 
 $('go-settings').onclick  = ()=>{ renderSettings(); show('s-settings') };
 $('set-back').onclick     = ()=>{ renderHome(); show('s-home') };
 document.querySelectorAll('.mode').forEach(b => b.onclick = () => start(b.dataset.mode));
+
+/* ══════════════════════════════════════════════════════════
+   단(段) — 랭크 포인트
+   시간이 지나면 조금씩 깎이므로 유지하려면 계속 와야 한다.
+   급수·단수는 일본에서 실제로 쓰는 등급 체계라 주제와도 맞는다.
+   ══════════════════════════════════════════════════════════ */
+const TIERS = [
+  [0,'10級'],[80,'9級'],[160,'8級'],[250,'7級'],[350,'6級'],[460,'5級'],
+  [580,'4級'],[720,'3級'],[880,'2級'],[1060,'1級'],
+  [1260,'初段'],[1500,'二段'],[1800,'三段'],[2200,'四段'],[2700,'五段']
+];
+const DECAY_PER_HOUR = 0.005;          // 시간당 0.5% → 하루 약 −11%
+
+function tierOf(rp){
+  let i = 0;
+  TIERS.forEach((t, j) => { if(rp >= t[0]) i = j });
+  return { i, name: TIERS[i][1], base: TIERS[i][0], next: TIERS[i+1] ? TIERS[i+1][0] : null };
+}
+/* 마지막으로 계산한 시각부터 흐른 만큼 한 번에 깎는다 (앱이 떠 있지 않아도 흐름) */
+function decayRP(){
+  const now = NOW();
+  if(!stats.rpAt){ stats.rpAt = now; return }
+  const hrs = (now - stats.rpAt) / 36e5;
+  if(hrs < .05) return;
+  stats.rp  = Math.max(0, Math.round((stats.rp || 0) * Math.pow(1 - DECAY_PER_HOUR, hrs)));
+  stats.rpAt = now;
+}
+const GRADE_RP = { S:100, A:70, B:40, C:15, D:-15 };
+const gradeOf = (acc, perfect) =>
+  perfect ? 'S' : acc >= .9 ? 'A' : acc >= .75 ? 'B' : acc >= .6 ? 'C' : 'D';
+/* 세션이 길수록, 콤보가 길수록 더 오른다 */
+function sessionRP(g, n, maxCombo){
+  const scale = Math.max(.6, Math.min(2, n / 10));
+  const bonus = GRADE_RP[g] > 0 ? Math.min(maxCombo, 15) * 2 : 0;
+  return Math.round(GRADE_RP[g] * scale + bonus);
+}
+
+function renderRank(){
+  decayRP();
+  const rp = stats.rp || 0, t = tierOf(rp);
+  $('rk-tier').textContent = t.name;
+  $('rk-rp').textContent   = rp.toLocaleString() + ' RP';
+  if(t.next){
+    $('rk-bar').style.width = ((rp - t.base) / (t.next - t.base) * 100) + '%';
+    $('rk-next').textContent = TIERS[t.i+1][1] + '까지 ' + (t.next - rp);
+  }else{
+    $('rk-bar').style.width = '100%';
+    $('rk-next').textContent = '최고 단';
+  }
+}
 
 /* ══════════════════════════════════════════════════════════
    시험 — 게임이 아니라 측정. 푸는 동안 정답을 알려주지 않고
@@ -1320,6 +1443,7 @@ function start(mode){
         qs, i:0, score:0, combo:0, maxCombo:0, right:0, wrong:[], newMast:0, locked:false,
         firstTotal: qs.length, seen:new Set(), requeued:new Set(), isRetest:false };
   touchDay();
+  renderCombo();                 // 이전 세션의 콤보 표시가 남지 않도록
   show('s-play');
   next();
 }
@@ -1337,9 +1461,40 @@ function endSession(){
   $('r-wrongwrap').style.display = S.wrong.length ? '' : 'none';
   box.innerHTML = S.wrong.map(w =>
     `<div><b class="jp">${esc(w.w)}<small style="color:var(--dim);font-weight:400"> ${esc(w.r)}</small></b><span>${esc(w.m)}</span></div>`).join('');
-  if(S.score > (stats.best||0)){ stats.best = S.score }
+  // ── 등급과 단(段) ──────────────────────────────────────
+  const acc     = total ? S.right/total : 0;
+  const perfect = S.right === total && total >= 5;
+  const g       = gradeOf(acc, perfect);
+  decayRP();
+  const before  = tierOf(stats.rp || 0);
+  const delta   = sessionRP(g, total, S.maxCombo);
+  stats.rp      = Math.max(0, (stats.rp || 0) + delta);
+  stats.rpAt    = NOW();
+  const after   = tierOf(stats.rp);
+
+  $('r-grade').textContent = g;
+  $('r-grade').className   = 'grade g-' + g;
+  $('r-rp').textContent    = (delta >= 0 ? '+' : '') + delta + ' RP';
+  $('r-rp').className      = 'rpd ' + (delta >= 0 ? 'up' : 'down');
+  $('r-tier').innerHTML    = after.i > before.i
+      ? `<span class="tierup">${after.name} 승급!</span>`
+      : after.i < before.i
+        ? `<span class="rpt">${after.name}(으)로 하락</span>`
+        : `<b>${after.name}</b> · ${stats.rp.toLocaleString()} RP`;
+
+  // 최고 점수 — 여태 저장만 하고 보여주지 않았다
+  const prevBest = (stats.bestBy && stats.bestBy[S.mode]) || 0;
+  const isBest   = S.kind !== 'flash' && S.score > prevBest;
+  stats.bestBy = stats.bestBy || {};
+  if(isBest) stats.bestBy[S.mode] = S.score;
+  if(S.score > (stats.best||0)) stats.best = S.score;
+  $('r-best').innerHTML = S.kind === 'flash' ? ''
+      : isBest ? '<span class="newbest">최고 기록 갱신!</span>'
+               : (prevBest ? `이 모드 최고 ${prevBest.toLocaleString()}점` : '');
+
   save(); syncURL();
-  if(S.right/total >= .8) beep('win');
+  if(perfect || after.i > before.i) beep('win');
+  else if(acc >= .8) beep('win');
   show('s-result');
 }
 
@@ -1353,7 +1508,7 @@ function next(){
 
   $('prog').style.width = (S.i / S.qs.length * 100)+'%';
   $('score').textContent = S.kind==='flash' ? (S.i+1)+'/'+S.qs.length : S.score;
-  $('qcard').className = 'qcard';
+  $('qcard').className = 'qcard' + (S.combo >= FEVER ? ' fever' : '');
   $('qread').classList.add('hidden');
   $('qcard').classList.remove('flipped');
 
@@ -1438,6 +1593,31 @@ function distractors(w, k, n){
   return shuffle(scored.slice(0, Math.max(n * 4, 12))).slice(0, n).map(o => o.x);
 }
 
+/* ---------- 타격감 ---------- */
+const FEVER = 10;
+/* 10콤보부터 배율이 가속된다 — 상한이 ×1.9 로 막혀 있으면 후반이 심심하다 */
+const comboMult = c => c >= FEVER ? Math.min(4, 2 + (c - FEVER) * .15)
+                                  : 1 + Math.min(c - 1, 9) * .1;
+function renderCombo(){
+  const c = $('combo'), n = S.combo;
+  $('qcard').classList.toggle('fever', n >= FEVER);
+  if(n < 3){ c.className = 'combo'; c.textContent = ''; return }
+  c.textContent = n >= FEVER ? `FEVER  ${n} COMBO ×${comboMult(n).toFixed(1)}`
+                             : `${n} COMBO ×${comboMult(n).toFixed(1)}`;
+  c.className = 'combo on ' + (n >= FEVER ? 'fever' : n >= 6 ? 't2' : 't1');
+}
+/* 고른 보기 위에서 획득 점수가 떠오른다 */
+function floatGain(el, text, big){
+  const r = el.getBoundingClientRect();
+  const f = document.createElement('div');
+  f.className = 'gain' + (big ? ' big' : '');
+  f.textContent = text;
+  f.style.left = (r.left + r.width / 2) + 'px';
+  f.style.top  = (r.top + r.height / 2) + 'px';
+  document.body.appendChild(f);
+  setTimeout(() => f.remove(), 900);
+}
+
 /* 틀린 문항은 같은 세션 안에서 한 번 더 — 정답률·SRS 에는 두 번 세지 않는다 */
 function requeue(w, k){
   if(S.requeued.has(k)) return;
@@ -1453,12 +1633,14 @@ function runTimer(sec){
   bar.classList.remove('hide');
   const t0 = NOW(), ms = sec*1000;
   fill.style.width='100%'; fill.style.background='var(--gold)';
+  bar.classList.remove('urgent');
   S.tRemain = 1;
   S.timerId = setInterval(()=>{
     const left = 1 - (NOW()-t0)/ms;
     S.tRemain = Math.max(0, left);
     fill.style.width = Math.max(0,left*100)+'%';
     if(left < .3) fill.style.background='var(--bad)';
+    bar.classList.toggle('urgent', left > 0 && left * sec <= 3);
     if(left <= 0){ clearInterval(S.timerId); if(!S.locked) answer(false, null, true) }
   }, 50);
 }
@@ -1472,13 +1654,15 @@ function answer(ok, el, timeout){
 
   if(ok){
     S.right++; S.combo++; S.maxCombo = Math.max(S.maxCombo, S.combo);
-    const mult = 1 + Math.min(S.combo-1, 9)*0.1;
+    const mult  = comboMult(S.combo);
     const timeB = opt.timer ? Math.round(S.tRemain*10) : 0;
-    S.score += Math.round((10 + timeB) * mult);
+    const got   = Math.round((10 + timeB) * mult);
+    S.score += got;
     beep('ok');
-    if(S.combo >= 3){ const c=$('combo'); c.textContent = S.combo+' COMBO ×'+mult.toFixed(1); c.classList.add('on') }
+    if(el) floatGain(el, '+' + got, S.combo >= FEVER);
+    renderCombo();
   }else{
-    S.combo = 0; $('combo').classList.remove('on');
+    S.combo = 0; renderCombo();
     S.wrong.push(w);
     beep('bad');
   }
@@ -1506,6 +1690,7 @@ function answer(ok, el, timeout){
     });
   }else if(S.kind==='type'){
     const inp = $('typein'); inp.disabled = true; inp.classList.add(ok?'ok':'bad');
+    if(ok && !el) floatGain(inp, '+' + Math.round((10 + (opt.timer?Math.round(S.tRemain*10):0)) * comboMult(S.combo)), S.combo >= FEVER);
     $('verdict').innerHTML = ok ? '<b>정답!</b>'
       : (timeout ? '<i>시간 초과</i> — ' : '<i>오답</i> — ')
         + (opt.input==='r' ? `${esc(w.r)} <span class="krd">${kanaToKo(w.r)}</span>` : esc(w.m));
@@ -2161,7 +2346,7 @@ function applyImport(mode){
     custom   = inc.custom;
     removed  = inc.removed;
     history  = inc.history;
-    if(inc.stats) stats = Object.assign({best:0, day:'', today:0, streak:0}, inc.stats);
+    if(inc.stats) stats = Object.assign({best:0, day:'', today:0, streak:0, rp:0, rpAt:0, bestBy:{}}, inc.stats);
   }else{
     Object.keys(inc.progress).forEach(k=>{
       const mine = progress[k], theirs = inc.progress[k];
@@ -2201,7 +2386,7 @@ $('m-export').onclick = ()=>{
 };
 $('m-reset').onclick = ()=>{
   if(!confirm('학습 기록(암기 단계 · 통계 · 일별 그래프)을 모두 지웁니다.\n단어 목록은 유지됩니다.')) return;
-  progress = {}; history = {}; stats = {best:0, day:'', today:0, streak:0};
+  progress = {}; history = {}; stats = {best:0, day:'', today:0, streak:0, rp:0, rpAt:0, bestBy:{}};
   save(); renderList(); renderSettings(); toast('초기화했어요');
 };
 
