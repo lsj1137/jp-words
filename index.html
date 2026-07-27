@@ -128,6 +128,13 @@
               background:linear-gradient(90deg, var(--sq4), var(--gold));
               transition:width .6s cubic-bezier(.2,.7,.3,1)}
   .rk-next{font-size:14px; color:var(--dim2)}
+  /* 시험 버튼 — 게임 쪽 주색(빨강)과 성격이 달라 차분한 면으로 */
+  .btn.exam{margin-top:10px; margin-bottom:46px; padding:16px 18px; background:var(--s3)}
+  .btn.exam:hover{background:var(--card)}
+  .btn.exam svg.i{color:var(--dim)}
+  .btn.exam:disabled{opacity:.5; cursor:default; background:var(--bg2); box-shadow:none}
+  .btn.exam:disabled:hover{background:var(--bg2)}
+  #exam-note{margin-top:-38px; margin-bottom:40px; font-size:14px}
 
   .statpanel{background:linear-gradient(158deg, var(--s3), var(--card));
              border-radius:var(--r); box-shadow:var(--lift);
@@ -360,6 +367,7 @@
   .choice.sel kbd{background:#0003}
   .enav{display:flex; gap:8px; margin-top:auto; padding-top:20px; padding-bottom:6px}
   .enav .btn:disabled{opacity:.35; cursor:default}
+  #er-again:disabled{opacity:.45; cursor:default}
   .escore{display:flex; align-items:baseline; justify-content:center; gap:6px; margin:8px 0 6px}
   .escore b{font-size:66px; font-weight:700; line-height:1; letter-spacing:-3px;
             font-variant-numeric:tabular-nums}
@@ -618,7 +626,8 @@
     <button data-v="20">20문항</button>
     <button data-v="40">40문항</button>
   </div>
-  <button class="btn primary" id="go-exam" style="margin-top:9px"><svg class="i"><use href="#i-list"/></svg> 시험 시작</button>
+  <button class="btn exam" id="go-exam"><svg class="i"><use href="#i-list"/></svg> <span id="go-exam-tx">시험 시작</span></button>
+  <div class="muted center" id="exam-note" style="margin-top:9px"></div>
 </section>
 
 <!-- ═══════════ 시험 ═══════════ -->
@@ -916,7 +925,7 @@ const DB = {
   set(k, v){ localStorage.setItem('jw.'+k, JSON.stringify(v)) }
 };
 let progress = DB.get('progress', {});   // key -> {box, due, r, w}
-let stats    = DB.get('stats', {best:0, day:'', today:0, streak:0, lastDay:'', rp:0, rpAt:0, bestBy:{}});
+let stats    = DB.get('stats', {best:0, day:'', today:0, streak:0, lastDay:'', rp:0, rpAt:0, bestBy:{}, examDay:'', examScore:0});
 let history  = DB.get('history', {});    // "YYYY-MM-DD" -> [푼 문제, 맞은 수, 새로 외운 수]
 let custom   = DB.get('custom', []);     // 사용자 추가 [w,r,m,lv]
 let removed  = DB.get('removed', []);    // 삭제한 key
@@ -1139,6 +1148,7 @@ function renderHome(){
   $('mode-review').disabled = d===0;
 
   renderRank();
+  renderExamEntry();
   setSeg('seg-level', opt.level);
   setSeg('seg-dir',   opt.dir);
   setSeg('seg-exam',  opt.examN);
@@ -1261,7 +1271,19 @@ function buildExam(n){
   return shuffle(items);
 }
 
+const examDoneToday = () => stats.examDay === ymd(new Date(NOW()));
+
+function renderExamEntry(){
+  const done = examDoneToday();
+  $('go-exam').disabled = done;
+  $('go-exam-tx').textContent = done ? '오늘 시험 완료' : '시험 시작';
+  $('exam-note').textContent = done
+    ? `오늘 ${stats.examScore}점 · 시험은 하루에 한 번만 볼 수 있어요`
+    : '';
+}
+
 function startExam(){
+  if(examDoneToday()){ toast('시험은 하루에 한 번만 볼 수 있어요'); return }
   const items = buildExam(+opt.examN);
   if(!items){ toast('단어가 부족해요 — 범위를 넓혀보세요'); return }
   EXM = { items, i:0 };
@@ -1323,9 +1345,12 @@ function submitExam(){
     grade(k, ok);                  // 시험 결과도 학습 기록에 반영한다
     logAnswer(ok, false);
   });
-  save(); syncURL();
-
   const n = EXM.items.length, score = Math.round(right / n * 100);
+  // 시작이 아니라 '제출' 시점에 기록한다 — 중도 포기는 기회를 쓰지 않는다
+  stats.examDay = ymd(new Date(NOW()));
+  stats.examScore = score;
+  save(); syncURL();          // examDay 까지 담아서 저장해야 새로고침 후에도 유지된다
+
   $('er-score').textContent = score;
   $('er-sub').textContent = `${n}문항 중 ${right}개 정답`;
   $('er-types').innerHTML = Object.keys(ETYPE).filter(t => byType[t])
@@ -1346,6 +1371,8 @@ function submitExam(){
       <div class="muted" style="margin-top:4px">${esc(it.w.w)} · ${esc(it.w.r)} · ${esc(it.w.m)}</div>
     </div>`;
   }).join('');
+  $('er-again').disabled = true;
+  $('er-again').textContent = '내일 다시';
   if(score >= 80) beep('win');
   show('s-eresult');
 }
@@ -2343,7 +2370,7 @@ function applyImport(mode){
     custom   = inc.custom;
     removed  = inc.removed;
     history  = inc.history;
-    if(inc.stats) stats = Object.assign({best:0, day:'', today:0, streak:0, rp:0, rpAt:0, bestBy:{}}, inc.stats);
+    if(inc.stats) stats = Object.assign({best:0, day:'', today:0, streak:0, rp:0, rpAt:0, bestBy:{}, examDay:'', examScore:0}, inc.stats);
   }else{
     Object.keys(inc.progress).forEach(k=>{
       const mine = progress[k], theirs = inc.progress[k];
@@ -2383,7 +2410,7 @@ $('m-export').onclick = ()=>{
 };
 $('m-reset').onclick = ()=>{
   if(!confirm('학습 기록(암기 단계 · 통계 · 일별 그래프)을 모두 지웁니다.\n단어 목록은 유지됩니다.')) return;
-  progress = {}; history = {}; stats = {best:0, day:'', today:0, streak:0, rp:0, rpAt:0, bestBy:{}};
+  progress = {}; history = {}; stats = {best:0, day:'', today:0, streak:0, rp:0, rpAt:0, bestBy:{}, examDay:'', examScore:0};
   save(); renderList(); renderSettings(); toast('초기화했어요');
 };
 
