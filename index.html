@@ -5,29 +5,44 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>単語 — 일본어 단어 게임</title>
 <style>
+  /* ══════════════════════════════════════════════════════════
+     디자인 토큰 — 면은 '선'이 아니라 '명도 단계'로 구분한다.
+     테두리를 쓰지 않으므로 단계 간 밝기 차이를 충분히 벌려 두었다.
+       --bg   바탕      가장 어두움
+       --bg2  우묵한 면  트랙 · 입력칸 · 칩          (바탕보다 살짝 밝게/어둡게)
+       --card 떠 있는 면 카드 · 목록 행 · 설정 행
+       --s3   최상단     세그먼트 썸 · 호버
+     ══════════════════════════════════════════════════════════ */
   :root{
-    --bg:#12100f; --bg2:#1b1817; --card:#211d1c; --line:#332d2b;
-    --fg:#f2ece8; --dim:#a3968f; --dim2:#6f625c;
-    --accent:#e2543f; --accent-soft:#3a1f1a;
-    --ok:#5fbf7d; --ok-soft:#17301f;
-    --bad:#e2543f; --bad-soft:#3a1b17;
+    --bg:#0d0b0a; --bg2:#1e1a19; --card:#292423; --s3:#37302e;
+    --line:#3a3230;                       /* 남은 용도: 선이 아니라 '빈 눈금' 채우기 */
+    --track:#00000047;                    /* 밝은 면 위에 파인 트랙 */
+    --fg:#f4efeb; --dim:#b3a49b; --dim2:#a89a90;
+    /* 주색 두 갈래: 글자·아이콘용(밝게) / 흰 글자를 얹는 면용(어둡게) */
+    --accent:#e2543f; --accent-fill:#cf4028; --accent-tx:#f2705a; --accent-soft:#3d211b;
+    --ok:#5fbf7d; --ok-soft:#18321f;
+    --bad:#e2543f; --bad-soft:#3d1c17;
     --gold:#e9b949;
-    --shadow:0 1px 3px #0006;
-    --r:14px;
+    --lift-sm:0 1px 2px #00000047;
+    --lift:0 2px 4px #0000003d, 0 8px 20px #00000030;
+    --r:16px; --r-sm:11px;
     color-scheme:dark;
-    /* 암기 단계용 순차 램프 (약 → 강). 다크 표면 #211d1c 기준으로 검증됨 */
+    /* 암기 단계용 순차 램프 (약 → 강). 표면 #272221 기준으로 검증됨 */
     --sq1:#7a4634; --sq2:#93553a; --sq3:#ac6441; --sq4:#c57448; --sq5:#de8550; --sq6:#f79759;
   }
   :root[data-theme="light"]{
-    --bg:#faf8f5; --bg2:#f0eae4; --card:#ffffff; --line:#e4dbd2;
-    --fg:#231e1b; --dim:#7b6d65; --dim2:#a2948b;
-    --accent:#c8442c; --accent-soft:#fbe8e3;
+    --bg:#f6f2ec; --bg2:#e9e1d7; --card:#fffdfb; --s3:#ffffff;
+    --line:#ded4c8;
+    --track:#00000014;
+    --fg:#241f1c; --dim:#5f534b; --dim2:#6d5f56;
+    --accent:#c8442c; --accent-fill:#c8442c; --accent-tx:#ae3420; --accent-soft:#fae7e1;
     --ok:#2e8b57; --ok-soft:#e4f2e9;
-    --bad:#c8442c; --bad-soft:#fbe8e3;
+    --bad:#c8442c; --bad-soft:#fae7e1;
     --gold:#a8760c;
-    --shadow:0 1px 3px #00000014;
+    --lift-sm:0 1px 2px #0000000f;
+    --lift:0 2px 4px #0000000d, 0 8px 20px #00000012;
     color-scheme:light;
-    /* 라이트 표면 #ffffff 기준으로 검증된 같은 색상의 램프 */
+    /* 라이트 표면 #fffdfb 기준으로 검증된 같은 색상의 램프 */
     --sq1:#e5a08b; --sq2:#d1866d; --sq3:#bb6c50; --sq4:#a15437; --sq5:#873c20; --sq6:#6b280c;
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
@@ -37,102 +52,165 @@
     font-family:"Pretendard","Apple SD Gothic Neo","Noto Sans KR",-apple-system,system-ui,sans-serif;
     display:flex; justify-content:center;
     overscroll-behavior:none;
+    -webkit-font-smoothing:antialiased;
   }
   .app{width:100%; max-width:540px; min-height:100dvh; display:flex; flex-direction:column;
-       padding:18px 16px calc(18px + env(safe-area-inset-bottom));}
+       padding:20px 16px calc(20px + env(safe-area-inset-bottom));}
   .jp{font-family:"Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo","Noto Sans JP",sans-serif}
+
+  /* 테두리를 없앤 만큼 키보드 초점은 더 분명하게 */
+  :focus-visible{outline:2px solid var(--accent); outline-offset:3px}
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation-duration:.01ms !important; transition-duration:.01ms !important}
+  }
 
   /* ---------- 공통 ---------- */
   .screen{display:none; flex:1; flex-direction:column}
-  .screen.on{display:flex}
+  .screen.on{display:flex; animation:screenIn .26s cubic-bezier(.2,.7,.3,1)}
+  @keyframes screenIn{from{opacity:0; transform:translateY(7px)} to{opacity:1; transform:none}}
   button{font:inherit; color:inherit; border:0; background:none; cursor:pointer}
   .btn{
     display:flex; align-items:center; justify-content:center; gap:8px;
     padding:14px 18px; border-radius:var(--r); background:var(--card);
-    border:1px solid var(--line); font-weight:600; transition:.12s;
+    font-weight:600; box-shadow:var(--lift-sm); transition:background .15s, transform .12s, box-shadow .15s;
   }
+  .btn:hover{background:var(--s3)}
   .btn:active{transform:scale(.985)}
-  .btn.primary{background:var(--accent); border-color:var(--accent); color:#fff}
-  .btn.ghost{background:transparent}
-  .btn.sm{padding:9px 13px; font-size:13px; border-radius:10px; font-weight:500}
+  .btn.primary{background:var(--accent-fill); color:#fff}
+  .btn.primary:hover{background:var(--accent-fill); filter:brightness(1.08)}
+  .btn.ghost{background:transparent; box-shadow:none; font-weight:500; color:var(--dim)}
+  .btn.ghost:hover{background:var(--bg2); color:var(--fg)}
+  .btn.sm{padding:10px 13px; font-size:14px; border-radius:var(--r-sm); font-weight:500}
   .row{display:flex; gap:8px}
-  .muted{color:var(--dim); font-size:13px}
+
+  /* ---------- 아이콘 (Lucide / ISC) ---------- */
+  svg.i{width:1.05em; height:1.05em; flex:none; vertical-align:-.15em;
+        fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round}
+  .iconbtn{width:38px; height:38px; flex:none; display:grid; place-items:center; border-radius:12px;
+           color:var(--dim); background:var(--bg2); transition:.15s}
+  .iconbtn:hover{color:var(--fg); background:var(--card); box-shadow:var(--lift-sm)}
+  .iconbtn:active{transform:scale(.94)}
+  .iconbtn svg.i{width:18px; height:18px}
+  .muted{color:var(--dim); font-size:14px}
   .center{text-align:center}
 
   /* ---------- 홈 ---------- */
-  .brand{display:flex; align-items:baseline; gap:10px; margin-bottom:20px}
-  .brand h1{margin:0; font-size:30px; letter-spacing:-.5px}
-  .brand span{color:var(--dim); font-size:13px}
-  .stats{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:22px}
-  .stat{background:var(--bg2); border:1px solid var(--line); border-radius:12px; padding:11px 8px; text-align:center}
-  .stat b{display:block; font-size:20px; line-height:1.2; font-variant-numeric:tabular-nums}
-  .stat small{color:var(--dim2); font-size:11px}
-  .bar{height:7px; background:var(--bg2); border-radius:99px; overflow:hidden; margin:-8px 0 22px}
-  .bar i{display:block; height:100%; background:linear-gradient(90deg,var(--accent),var(--gold)); border-radius:99px; transition:width .4s}
+  .brand{display:flex; align-items:baseline; gap:11px; margin-bottom:18px}
+  .brand h1{margin:0; font-size:33px; font-weight:600; letter-spacing:-1px}
+  .brand h1 em{font-style:normal; color:var(--accent)}   /* 낙관(落款)처럼 한 글자만 주색 */
+  .brand span{color:var(--dim2); font-size:14px; font-weight:500; letter-spacing:3px}
+  .brand .iconbtn{align-self:center}
 
-  .seg{display:flex; background:var(--bg2); border:1px solid var(--line); border-radius:12px; padding:3px; gap:3px}
-  .seg button{flex:1; padding:8px 0; border-radius:9px; font-size:13px; color:var(--dim); transition:.12s}
-  .seg button.on{background:var(--card); color:var(--fg); font-weight:600; box-shadow:var(--shadow)}
-  .label{font-size:12px; color:var(--dim2); margin:18px 0 7px; letter-spacing:.4px}
+  /* 통계 + 숙련도 막대는 하나의 우묵한 판 위에 — 낱개 상자 4개로 흩어놓지 않는다 */
+  .statpanel{background:linear-gradient(158deg, var(--s3), var(--card));
+             border-radius:var(--r); box-shadow:var(--lift);
+             padding:18px 18px 16px; margin-bottom:20px}
+  .stats{display:grid; grid-template-columns:repeat(4,1fr); margin-bottom:14px}
+  .stat{text-align:center}
+  .stat b{display:block; font-size:24px; font-weight:650; line-height:1.1;
+          font-variant-numeric:tabular-nums; letter-spacing:-.8px}
+  .stat small{display:block; color:var(--dim2); font-size:14px; margin-top:6px; letter-spacing:-.2px}
+  .bar{height:7px; background:var(--track); border-radius:99px; overflow:hidden}
+  .bar i{display:block; height:100%; background:linear-gradient(90deg,var(--accent),var(--gold));
+         border-radius:99px; transition:width .5s cubic-bezier(.2,.7,.3,1)}
 
-  .modes{display:flex; flex-direction:column; gap:9px; margin-top:6px}
+  /* 세그먼트 — 실제로 미끄러지는 썸. 이 화면의 서명 같은 동작이라 여기에만 스프링을 쓴다 */
+  .seg{position:relative; display:flex; background:var(--bg2); border-radius:13px; padding:4px}
+  .seg .thumb{position:absolute; top:4px; bottom:4px; left:4px; z-index:0;
+              width:calc((100% - 8px) / var(--count,2));
+              background:var(--card); border-radius:10px; box-shadow:var(--lift-sm);
+              transform:translateX(calc(var(--n,0) * 100%));
+              transition:transform .36s cubic-bezier(.34,1.32,.5,1)}
+  .seg button{position:relative; z-index:1; flex:1; padding:9px 0; font-size:14px;
+              color:var(--dim2); transition:color .2s, font-weight .2s}
+  .seg button.on{color:var(--fg); font-weight:600}
+  .label{font-size:14px; color:var(--dim2); margin:20px 0 9px; letter-spacing:.2px; font-weight:600}
+
+  .modes{display:flex; flex-direction:column; gap:8px}
   .mode{display:flex; align-items:center; gap:13px; padding:15px; background:var(--card);
-        border:1px solid var(--line); border-radius:var(--r); text-align:left; transition:.12s}
+        border-radius:var(--r); text-align:left; box-shadow:var(--lift-sm);
+        transition:background .15s, transform .15s, box-shadow .15s}
+  .mode:hover{background:var(--s3); transform:translateY(-1px); box-shadow:var(--lift)}
   .mode:active{transform:scale(.99)}
-  .mode .ic{width:40px; height:40px; flex:none; border-radius:11px; background:var(--accent-soft);
-            display:grid; place-items:center; font-size:19px}
+  .mode .ic{width:42px; height:42px; flex:none; border-radius:12px; background:var(--accent-soft);
+            color:var(--accent); display:grid; place-items:center; font-size:19px}
   .mode .tx{flex:1; min-width:0}
-  .mode .tx b{display:block; font-size:15px; margin-bottom:2px}
-  .mode .tx small{color:var(--dim); font-size:12px}
-  .mode .cnt{font-size:12px; color:var(--dim2); font-variant-numeric:tabular-nums}
-  .mode[disabled]{opacity:.42}
+  .mode .tx b{display:block; font-size:16px; margin-bottom:3px}
+  .mode .tx small{color:var(--dim); font-size:14px}
+  .mode .cnt{font-size:14px; color:var(--dim2); font-variant-numeric:tabular-nums}
+  .mode[disabled]{opacity:.4}
+  .mode[disabled]:hover{background:var(--card); transform:none; box-shadow:var(--lift-sm)}
 
-  .footlinks{margin-top:auto; padding-top:22px; display:flex; gap:8px; justify-content:center; flex-wrap:wrap}
-  .footlinks button{font-size:12px; color:var(--dim2); padding:6px 10px; border-radius:8px}
-  .footlinks button:hover{color:var(--fg)}
+  /* 모드 버튼 아래 여백 — 홈 맨 아래가 답답하지 않도록 */
+  #s-home .modes{padding-bottom:40px}
+
+  /* ---------- 설정 ---------- */
+  .srow{display:flex; align-items:center; gap:12px; width:100%; padding:15px 14px; text-align:left;
+        background:var(--card); border-radius:var(--r-sm); font-size:15px;
+        box-shadow:var(--lift-sm); transition:background .15s, transform .12s}
+  .srow + .srow{margin-top:6px}
+  .srow:hover{background:var(--s3)}
+  .srow:active{transform:scale(.99)}
+  .srow > svg.i{width:17px; height:17px; color:var(--dim2)}
+  .srow .t{flex:1; min-width:0}
+  .srow .t small{display:block; color:var(--dim2); font-size:14px; margin-top:3px}
+  .srow .v{font-size:14px; font-weight:600; color:var(--accent-tx); flex:none}
+  .srow.danger{color:var(--bad)}
+  .srow.danger > svg.i{color:var(--bad)}
+  .srow svg.i.nav{width:16px; height:16px; color:var(--dim2)}
+  /* 설정 스크롤 영역 — 마지막 버튼 아래 여유 */
+  .setbody{flex:1; overflow:auto; margin:0 -3px; padding:0 3px 40px}
 
   /* ---------- 퀴즈 ---------- */
   .qtop{display:flex; align-items:center; gap:12px; margin-bottom:10px}
-  .qtop .x{font-size:20px; color:var(--dim2); padding:2px 8px; line-height:1}
+  .qtop .x{color:var(--dim2); padding:2px 8px; line-height:1}
+  .qtop .x:hover{color:var(--fg)}
   .prog{flex:1; height:5px; background:var(--bg2); border-radius:99px; overflow:hidden}
-  .prog i{display:block; height:100%; background:var(--dim); transition:width .25s}
-  .qtop .sc{font-size:13px; font-variant-numeric:tabular-nums; color:var(--dim); min-width:52px; text-align:right}
+  .prog i{display:block; height:100%; background:var(--dim); border-radius:99px; transition:width .3s}
+  .qtop .sc{font-size:14px; font-variant-numeric:tabular-nums; color:var(--dim); min-width:52px; text-align:right}
 
   .timer{height:3px; background:var(--bg2); border-radius:99px; overflow:hidden; margin-bottom:22px}
   .timer i{display:block; height:100%; background:var(--gold); width:100%}
   .timer.hide{visibility:hidden}
 
-  .combo{height:22px; text-align:center; font-size:13px; font-weight:700; color:var(--gold);
+  .combo{height:22px; text-align:center; font-size:14px; font-weight:700; color:var(--gold);
          opacity:0; transition:.2s; letter-spacing:.5px}
   .combo.on{opacity:1}
 
-  .qcard{background:var(--card); border:1px solid var(--line); border-radius:20px;
-         padding:34px 20px; text-align:center; margin-bottom:16px; position:relative; overflow:hidden}
-  .qcard.flash-ok{border-color:var(--ok); background:var(--ok-soft)}
-  .qcard.flash-bad{border-color:var(--bad); background:var(--bad-soft)}
-  .qhint{font-size:11px; color:var(--dim2); margin-bottom:14px; letter-spacing:.6px}
-  .qword{font-size:44px; font-weight:600; line-height:1.25; word-break:keep-all}
+  .qcard{background:var(--card); border-radius:22px; box-shadow:var(--lift);
+         padding:38px 20px; text-align:center; margin-bottom:16px; position:relative; overflow:hidden;
+         transition:background .2s}
+  .qcard.flash-ok{background:var(--ok-soft)}
+  .qcard.flash-bad{background:var(--bad-soft)}
+  .qhint{font-size:14px; color:var(--dim2); margin-bottom:16px; letter-spacing:.2px}
+  .qword{font-size:46px; font-weight:600; line-height:1.22; word-break:keep-all; letter-spacing:-.5px}
   .qword.ko{font-size:32px}
-  .qread{margin-top:12px; font-size:16px; color:var(--dim); min-height:22px}
+  .qread{margin-top:13px; font-size:16px; color:var(--dim); min-height:22px}
   .qread.hidden{opacity:0}
 
-  .choices{display:grid; gap:9px}
-  .choice{display:flex; align-items:center; gap:11px; padding:15px 16px; background:var(--card);
-          border:1px solid var(--line); border-radius:var(--r); text-align:left; font-size:16px; transition:.12s}
-  .choice kbd{font:inherit; font-size:11px; color:var(--dim2); background:var(--bg2);
-              border:1px solid var(--line); border-radius:6px; padding:2px 6px; flex:none}
-  .choice.ok{background:var(--ok-soft); border-color:var(--ok)}
-  .choice.bad{background:var(--bad-soft); border-color:var(--bad)}
-  .choice.fade{opacity:.4}
+  .choices{display:grid; gap:8px}
+  .choice{display:flex; align-items:center; gap:11px; padding:16px; background:var(--card);
+          border-radius:var(--r); text-align:left; font-size:16px; box-shadow:var(--lift-sm);
+          transition:background .15s, transform .12s, box-shadow .15s}
+  .choice:hover{background:var(--s3)}
+  .choice:active{transform:scale(.99)}
+  .choice kbd{font:inherit; font-size:14px; color:var(--dim2); background:var(--bg2);
+              border-radius:7px; padding:1px 9px; flex:none}
+  .choice.ok{background:var(--ok-soft); font-weight:600}
+  .choice.ok kbd{background:#0003}
+  .choice.bad{background:var(--bad-soft)}
+  .choice.bad kbd{background:#0003}
+  .choice.fade{opacity:.38; box-shadow:none}
 
   .typing{display:flex; flex-direction:column; gap:10px}
   .typing input{
-    width:100%; padding:16px; font-size:22px; text-align:center; border-radius:var(--r);
-    background:var(--card); border:1.5px solid var(--line); color:var(--fg); outline:none;
+    width:100%; padding:17px; font-size:22px; text-align:center; border-radius:var(--r);
+    background:var(--bg2); border:0; color:var(--fg); outline:none;
+    caret-color:var(--accent); transition:background .15s, box-shadow .15s;
   }
-  .typing input:focus{border-color:var(--accent)}
-  .typing input.ok{border-color:var(--ok); background:var(--ok-soft)}
-  .typing input.bad{border-color:var(--bad); background:var(--bad-soft)}
+  .typing input:focus{background:var(--card); box-shadow:0 0 0 3px var(--accent-soft)}
+  .typing input.ok{background:var(--ok-soft); box-shadow:0 0 0 3px var(--ok-soft)}
+  .typing input.bad{background:var(--bad-soft); box-shadow:0 0 0 3px var(--bad-soft)}
   .kana{min-height:26px; text-align:center; font-size:19px; color:var(--gold)}
   .verdict{min-height:24px; text-align:center; font-size:14px}
   .verdict b{color:var(--ok)}
@@ -141,104 +219,145 @@
   .qfoot{margin-top:auto; padding-top:16px}
 
   /* ---------- 결과 ---------- */
-  .big{font-size:52px; font-weight:700; text-align:center; font-variant-numeric:tabular-nums; line-height:1.1}
+  .big{font-size:56px; font-weight:700; text-align:center; font-variant-numeric:tabular-nums;
+       line-height:1.05; letter-spacing:-2px}
   .rgrid{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:22px 0}
-  .wrongbox{background:var(--bg2); border:1px solid var(--line); border-radius:var(--r);
-            padding:6px 14px; max-height:230px; overflow:auto}
-  .wrongbox div{display:flex; justify-content:space-between; gap:12px; padding:10px 0;
-                border-bottom:1px solid var(--line); font-size:14px}
-  .wrongbox div:last-child{border:0}
+  .wrongbox{background:var(--bg2); border-radius:var(--r);
+            padding:4px 15px; max-height:230px; overflow:auto}
+  .wrongbox div{display:flex; justify-content:space-between; gap:12px; padding:11px 0; font-size:14px}
   .wrongbox span{color:var(--dim); text-align:right; flex:none}
 
   /* ---------- 관리 ---------- */
-  .head{display:flex; align-items:center; gap:10px; margin-bottom:16px}
-  .head h2{margin:0; font-size:19px; flex:1}
-  .field{width:100%; padding:12px 14px; border-radius:11px; background:var(--bg2);
-         border:1px solid var(--line); color:var(--fg); outline:none; font:inherit; font-size:14px}
-  .field:focus{border-color:var(--accent)}
-  textarea.field{min-height:110px; resize:vertical; font-size:13px; line-height:1.6}
-  .list{flex:1; overflow:auto; margin-top:12px; border-top:1px solid var(--line)}
-  .item{display:flex; align-items:center; gap:11px; padding:11px 2px; border-bottom:1px solid var(--line)}
+  .head{display:flex; align-items:center; gap:10px; margin-bottom:18px}
+  .head h2{margin:0; font-size:19px; flex:1; letter-spacing:-.3px}
+  .field{width:100%; padding:13px 15px; border-radius:var(--r-sm); background:var(--bg2);
+         border:0; color:var(--fg); outline:none; font:inherit; font-size:14px;
+         caret-color:var(--accent); transition:background .15s, box-shadow .15s}
+  .field::placeholder{color:var(--dim2)}
+  .field:focus{background:var(--card); box-shadow:0 0 0 3px var(--accent-soft)}
+  textarea.field{min-height:110px; resize:vertical; font-size:14px; line-height:1.6}
+  .list{flex:1; overflow:auto; margin-top:14px}
+  /* 행을 선으로 끊지 않는다 — 굵은 표기 + 흐린 읽기의 리듬이 구분자 역할을 한다 */
+  .item{display:flex; align-items:center; gap:12px; padding:11px 10px; border-radius:10px;
+        transition:background .12s}
+  .item:hover{background:var(--bg2)}
   .item .w{flex:1; min-width:0}
-  .item .w b{font-size:16px; font-weight:600}
-  .item .w small{display:block; color:var(--dim); font-size:12px; margin-top:2px}
-  .item .lv{font-size:10px; padding:2px 6px; border-radius:5px; background:var(--bg2); color:var(--dim2)}
-  .item .del{color:var(--dim2); font-size:17px; padding:4px 6px}
-  .item .del:hover{color:var(--bad)}
-  .pill{display:inline-block; width:6px; height:6px; border-radius:99px; background:var(--dim2)}
+  .item .w b{font-size:17px; font-weight:600}
+  .item .w small{display:block; color:var(--dim); font-size:14px; margin-top:3px}
+  .item .lv{font-size:14px; padding:1px 8px; border-radius:7px; background:var(--bg2); color:var(--dim2)}
+  .item:hover .lv{background:var(--card)}
+  .item .del{color:var(--dim2); padding:5px 6px; border-radius:7px}
+  .item .del:hover{color:var(--bad); background:var(--bad-soft)}
+  .pill{display:inline-block; width:6px; height:6px; border-radius:99px; background:var(--dim2); flex:none}
   .pill.l1{background:#7a5c2e}.pill.l2{background:#a8802f}.pill.l3{background:var(--gold)}
   .pill.l4,.pill.l5{background:var(--ok)}
 
   /* ---------- 사전 ---------- */
-  .chips{display:flex; gap:6px; flex-wrap:wrap; margin:11px 0 4px}
-  .chip{padding:6px 12px; border-radius:99px; border:1px solid var(--line);
-        background:var(--bg2); font-size:12.5px; color:var(--dim)}
-  .chip.on{background:var(--accent); border-color:var(--accent); color:#fff}
-  .dictitem{border-bottom:1px solid var(--line); padding:12px 2px}
-  .dictrow{display:flex; align-items:center; gap:11px; cursor:pointer}
-  .dictrow .w{flex:1; min-width:0}
-  .dictrow .w b{font-size:17px; font-weight:600}
-  .dictrow .w .rd{color:var(--dim); font-size:12.5px; margin-top:3px}
-  .dictrow .mean{font-size:14px; text-align:right; flex:none; max-width:44%; word-break:keep-all}
-  .dictrow .arw{color:var(--dim2); font-size:11px; flex:none}
-  .ex{margin-top:11px; padding:12px 14px; background:var(--bg2);
-      border-radius:11px; border-left:3px solid var(--accent)}
+  .chips{display:flex; gap:6px; flex-wrap:wrap; margin:12px 0 4px}
+  .chip{padding:7px 13px; border-radius:99px; background:var(--bg2);
+        font-size:14px; color:var(--dim); transition:.15s}
+  .chip:hover{background:var(--card); color:var(--fg)}
+  .chip.on{background:var(--accent-fill); color:#fff; font-weight:500}
+  .chip.on:hover{background:var(--accent-fill); color:#fff}
+  /* 사전 목록 — 한 줄에 두 칸. 펼친 항목만 두 칸을 모두 차지한다 */
+  #d-list{display:grid; grid-template-columns:1fr 1fr; gap:8px;
+          align-content:start; padding-bottom:24px}
+  #d-list .wide{grid-column:1 / -1}
+  .dictitem{background:var(--bg2); border-radius:12px; padding:12px 13px;
+            transition:background .13s, box-shadow .13s}
+  .dictitem:hover{background:var(--card)}
+  .dictitem.open{grid-column:1 / -1; background:var(--card); box-shadow:var(--lift-sm)}
+  .dictrow{cursor:pointer}
+  .dhead{display:flex; align-items:center; gap:7px; min-width:0}
+  .dhead b{font-size:17px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .dictrow .rd{color:var(--dim); font-size:14px; margin-top:4px}
+  .dictrow .mean{font-size:14px; margin-top:6px; line-height:1.4; word-break:keep-all}
+  /* 예문의 왼쪽 주색 획은 남긴다 — 상자를 두르는 테두리가 아니라 인용 표시에 가깝다 */
+  .ex{margin-top:12px; padding:13px 15px; background:var(--bg2);
+      border-radius:4px 12px 12px 4px; border-left:3px solid var(--accent)}
   .ex .ja{font-size:15.5px; line-height:1.65}
-  .ex .rd{font-size:12.5px; color:var(--dim); margin-top:5px; line-height:1.5}
-  .ex .ko{font-size:13px; color:var(--dim); margin-top:7px; padding-top:7px; border-top:1px solid var(--line)}
-  .ex .none{font-size:12.5px; color:var(--dim2)}
+  .ex .rd{font-size:14px; color:var(--dim); margin-top:5px; line-height:1.5}
+  .ex .ko{font-size:14px; color:var(--dim2); margin-top:9px}
+  .ex .none{font-size:14px; color:var(--dim2)}
+
+  /* ---------- 단어장 카드 모드 ----------
+     한 화면에 한 단어. 좌우로 밀어 넘긴다. */
+  .deck{flex:1; display:flex; flex-direction:column; min-height:0; margin-top:14px; padding-bottom:4px}
+  .dcard{flex:1; min-height:0; overflow:auto; position:relative; touch-action:pan-y;
+         display:flex; flex-direction:column; text-align:center;
+         background:linear-gradient(158deg, var(--s3), var(--card));
+         border-radius:22px; box-shadow:var(--lift); padding:30px 24px;
+         user-select:none; -webkit-user-select:none}
+  /* margin:auto 로 가운데 정렬 — 내용이 길어져도 위가 잘리지 않는다 */
+  .dcard .inner{margin:auto; width:100%}
+  .dcard .tag{position:absolute; top:16px; right:18px; font-size:14px; color:var(--dim2)}
+  .dcard .kanji{font-size:54px; font-weight:600; line-height:1.15; letter-spacing:-1px; word-break:keep-all}
+  .dcard .kana{font-size:20px; color:var(--gold); margin-top:13px}
+  .dcard .mean{font-size:22px; margin-top:18px; word-break:keep-all; line-height:1.4}
+  .dcard .rule{width:30px; height:2px; background:var(--accent); border-radius:2px; margin:26px auto 0}
+  .dcard .exj{font-size:16px; line-height:1.7; margin-top:20px}
+  .dcard .exr{font-size:14px; color:var(--dim); margin-top:7px; line-height:1.5}
+  .dcard .exk{font-size:14px; color:var(--dim2); margin-top:9px}
+  .dcard .noex{font-size:14px; color:var(--dim2); margin-top:22px}
+  .dnav{display:flex; align-items:center; justify-content:center; gap:10px; padding-top:14px}
+  .dcount{font-size:14px; color:var(--dim); font-variant-numeric:tabular-nums;
+          min-width:86px; text-align:center}
+  @keyframes cardR{from{opacity:0; transform:translateX(42px)} to{opacity:1; transform:none}}
+  @keyframes cardL{from{opacity:0; transform:translateX(-42px)} to{opacity:1; transform:none}}
 
   /* ---------- 학습 현황 차트 ----------
      전부 HTML/CSS로 그린다. SVG 텍스트와 달리 화면 폭이 바뀌어도 글자가 또렷하고,
      테마 변수를 그대로 쓸 수 있어서 라이트/다크가 자동으로 따라온다. */
-  .chart{background:var(--card); border:1px solid var(--line); border-radius:var(--r);
-         padding:15px 16px 14px; margin-bottom:10px}
-  .chart h3{margin:0; font-size:14px; font-weight:600}
-  .chart .sub{font-size:11.5px; color:var(--dim2); margin-top:3px; line-height:1.5}
-  .chart .body{margin-top:14px}
-  .chart .none{color:var(--dim2); font-size:12.5px; text-align:center; padding:14px 0; line-height:1.6}
+  .chart{background:var(--card); border-radius:var(--r); box-shadow:var(--lift-sm);
+         padding:16px 17px 15px; margin-bottom:9px}
+  .chart h3{margin:0; font-size:16px; font-weight:600}
+  .chart .sub{font-size:14px; color:var(--dim2); margin-top:4px; line-height:1.5}
+  .chart .body{margin-top:15px}
+  .chart .none{color:var(--dim2); font-size:14px; text-align:center; padding:14px 0; line-height:1.6}
 
   /* 가로 막대 */
-  .hbar{display:flex; align-items:center; gap:9px; margin-bottom:7px; font-size:12.5px}
+  .hbar{display:flex; align-items:center; gap:9px; margin-bottom:7px; font-size:14px}
   .hbar:last-child{margin-bottom:0}
   .hb-lab{flex:none; width:78px; color:var(--dim); white-space:nowrap;
           overflow:hidden; text-overflow:ellipsis}
   .hb-lab.jp{width:96px; color:var(--fg); font-size:14px}
-  .hb-track{flex:1; height:14px; background:var(--bg2); border-radius:4px; overflow:hidden}
-  .hb-track i{display:block; height:100%; border-radius:4px; min-width:2px; transition:width .45s}
+  .hb-track{flex:1; height:14px; background:var(--bg2); border-radius:5px; overflow:hidden}
+  .hb-track i{display:block; height:100%; border-radius:5px; min-width:2px; transition:width .5s}
   .hb-val{flex:none; min-width:32px; text-align:right; color:var(--dim); font-variant-numeric:tabular-nums}
 
   /* 세로 막대 */
-  .cols{display:flex; align-items:flex-end; gap:4px; height:104px}
+  .cols{display:flex; align-items:flex-end; gap:3px; height:110px}
   .col{flex:1; display:flex; flex-direction:column; justify-content:flex-end;
        align-items:center; height:100%; gap:4px; min-width:0}
   .col i{display:block; width:100%; background:var(--accent);
-         border-radius:4px 4px 0 0; min-height:2px; transition:height .45s}
+         border-radius:4px 4px 0 0; min-height:2px; transition:height .5s}
   /* 쉰 날은 빈칸이 아니라 낮은 눈금으로 — "데이터 없음"과 "0"을 구분해준다 */
   .col i.zero{background:var(--line); min-height:3px; border-radius:2px}
-  .col b{font-size:9.5px; color:var(--fg); font-weight:600; font-variant-numeric:tabular-nums}
-  .colx{display:flex; gap:4px; margin-top:7px}
-  .colx span{flex:1; min-width:0; text-align:center; font-size:9.5px; color:var(--dim2);
+  .col b{font-size:14px; color:var(--fg); font-weight:600; font-variant-numeric:tabular-nums; letter-spacing:-.4px}
+  .colx{display:flex; gap:3px; margin-top:8px}
+  .colx span{flex:1; min-width:0; text-align:center; font-size:14px; color:var(--dim2);
              font-variant-numeric:tabular-nums; overflow:hidden}
-  .colx span.now{color:var(--accent); font-weight:600}
+  .colx span.now{color:var(--accent-tx); font-weight:600}
+  /* 좁은 화면에서는 날짜를 하나 걸러 하나만 — 14px 라벨끼리 붙는 걸 막는다 */
+  @media (max-width:430px){ .colx span:nth-child(even){visibility:hidden} }
 
   /* 미터 */
   .meter{margin-bottom:12px}
   .meter:last-child{margin-bottom:0}
   .meter .top{display:flex; justify-content:space-between; align-items:baseline;
-              font-size:12.5px; margin-bottom:5px}
-  .meter .top em{font-style:normal; color:var(--dim); font-size:11.5px; font-variant-numeric:tabular-nums}
+              font-size:14px; margin-bottom:6px}
+  .meter .top em{font-style:normal; color:var(--dim); font-size:14px; font-variant-numeric:tabular-nums}
   .meter .track{height:8px; background:var(--bg2); border-radius:99px; overflow:hidden}
-  .meter .track i{display:block; height:100%; border-radius:99px; background:var(--sq5); transition:width .45s}
+  .meter .track i{display:block; height:100%; border-radius:99px; background:var(--sq5); transition:width .5s}
 
   /* ---------- 불러오기 확인 패널 ---------- */
-  .imp{margin-top:10px; padding:14px; border-radius:var(--r);
-       background:var(--bg2); border:1px solid var(--accent); font-size:13px; line-height:1.65}
+  .imp{margin-top:10px; padding:15px; border-radius:var(--r);
+       background:var(--accent-soft); font-size:14px; line-height:1.65}
   .imp b{font-weight:600}
 
   .toast{position:fixed; bottom:26px; left:50%; transform:translateX(-50%) translateY(20px);
-         background:var(--card); border:1px solid var(--line); padding:11px 18px; border-radius:99px;
-         font-size:13px; opacity:0; pointer-events:none; transition:.22s; z-index:9}
+         background:var(--s3); box-shadow:var(--lift); padding:12px 20px; border-radius:99px;
+         font-size:14px; opacity:0; pointer-events:none; transition:.22s; z-index:9}
   .toast.on{opacity:1; transform:translateX(-50%) translateY(0)}
 
   @keyframes pop{0%{transform:scale(.9)}60%{transform:scale(1.04)}100%{transform:scale(1)}}
@@ -246,34 +365,73 @@
 </style>
 </head>
 <body>
+
+<!-- Lucide 아이콘 (ISC License, lucide-static v1.27.0) — CDN 없이 인라인 스프라이트 -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<symbol id="i-book-open" viewBox="0 0 24 24"><path d="M12 5v16"/> <path d="M20.001 19A2 2 0 0022 17V5a2 2 0 00-1.999-2L16 3.002A5 5 0 0012 5a5 5 0 00-4-2H4a2 2 0 00-2 2v12a2 2 0 001.999 2H8a5 5 0 014 2 5 5 0 014-2z"/></symbol>
+<symbol id="i-chart-column" viewBox="0 0 24 24"><path d="M3 3v16a2 2 0 0 0 2 2h16"/> <path d="M18 17V9"/> <path d="M13 17V5"/> <path d="M8 17v-3"/></symbol>
+<symbol id="i-settings" viewBox="0 0 24 24"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"/> <circle cx="12" cy="12" r="3"/></symbol>
+<symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/> <circle cx="12" cy="12" r="6"/> <circle cx="12" cy="12" r="2"/></symbol>
+<symbol id="i-keyboard" viewBox="0 0 24 24"><path d="M10 8h.01"/> <path d="M12 12h.01"/> <path d="M14 8h.01"/> <path d="M16 12h.01"/> <path d="M18 8h.01"/> <path d="M6 8h.01"/> <path d="M7 16h10"/> <path d="M8 12h.01"/> <rect width="20" height="16" x="2" y="4" rx="2"/></symbol>
+<symbol id="i-layers" viewBox="0 0 24 24"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"/> <path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"/> <path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"/></symbol>
+<symbol id="i-repeat" viewBox="0 0 24 24"><path d="m17 2 4 4-4 4"/> <path d="M3 11v-1a4 4 0 0 1 4-4h14"/> <path d="m7 22-4-4 4-4"/> <path d="M21 13v1a4 4 0 0 1-4 4H3"/></symbol>
+<symbol id="i-moon" viewBox="0 0 24 24"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></symbol>
+<symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/> <path d="M12 2v2"/> <path d="M12 20v2"/> <path d="m4.93 4.93 1.41 1.41"/> <path d="m17.66 17.66 1.41 1.41"/> <path d="M2 12h2"/> <path d="M20 12h2"/> <path d="m6.34 17.66-1.41 1.41"/> <path d="m19.07 4.93-1.41 1.41"/></symbol>
+<symbol id="i-volume-2" viewBox="0 0 24 24"><path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z"/> <path d="M16 9a5 5 0 0 1 0 6"/> <path d="M19.364 18.364a9 9 0 0 0 0-12.728"/></symbol>
+<symbol id="i-volume-x" viewBox="0 0 24 24"><path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z"/> <line x1="22" x2="16" y1="9" y2="15"/> <line x1="16" x2="22" y1="9" y2="15"/></symbol>
+<symbol id="i-timer" viewBox="0 0 24 24"><line x1="10" x2="14" y1="2" y2="2"/> <line x1="12" x2="15" y1="14" y2="11"/> <circle cx="12" cy="14" r="8"/></symbol>
+<symbol id="i-timer-off" viewBox="0 0 24 24"><path d="M10 2h4"/> <path d="M4.6 11a8 8 0 0 0 1.7 8.7 8 8 0 0 0 8.7 1.7"/> <path d="M7.4 7.4a8 8 0 0 1 10.3 1 8 8 0 0 1 .9 10.2"/> <path d="m2 2 20 20"/> <path d="M12 12v-2"/></symbol>
+<symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7"/> <path d="M19 12H5"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/> <path d="m6 6 12 12"/></symbol>
+<symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 3v12"/> <path d="m17 8-5-5-5 5"/> <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/></symbol>
+<symbol id="i-download" viewBox="0 0 24 24"><path d="M12 15V3"/> <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/> <path d="m7 10 5 5 5-5"/></symbol>
+<symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/> <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></symbol>
+<symbol id="i-table-2" viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></symbol>
+<symbol id="i-rotate-ccw" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/> <path d="M3 3v5h5"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14"/> <path d="M12 5v14"/></symbol>
+<symbol id="i-arrow-left-right" viewBox="0 0 24 24"><path d="M8 3 4 7l4 4"/> <path d="M4 7h16"/> <path d="m16 21 4-4-4-4"/> <path d="M20 17H4"/></symbol>
+<symbol id="i-pencil" viewBox="0 0 24 24"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/> <path d="m15 5 4 4"/></symbol>
+<symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14"/> <path d="m12 5 7 7-7 7"/></symbol>
+<symbol id="i-list" viewBox="0 0 24 24"><path d="M3 5h.01"/> <path d="M3 12h.01"/> <path d="M3 19h.01"/> <path d="M8 5h13"/> <path d="M8 12h13"/> <path d="M8 19h13"/></symbol>
+<symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+<symbol id="i-trash-2" viewBox="0 0 24 24"><path d="M10 11v6"/> <path d="M14 11v6"/> <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/> <path d="M3 6h18"/> <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
+</svg>
+
 <div class="app">
 
 <!-- ═══════════ 홈 ═══════════ -->
 <section id="s-home" class="screen on">
-  <div class="brand"><h1 class="jp">単語</h1><span>일본어 단어 게임</span></div>
-
-  <div class="stats">
-    <div class="stat"><b id="st-mast">0</b><small>외운 단어</small></div>
-    <div class="stat"><b id="st-learn">0</b><small>학습 중</small></div>
-    <div class="stat"><b id="st-today">0</b><small>오늘</small></div>
-    <div class="stat"><b id="st-streak">0</b><small>연속 일수</small></div>
+  <div class="brand">
+    <h1 class="jp">単<em>語</em></h1><span style="flex:1">tango</span>
+    <button class="iconbtn" id="go-settings" title="설정" aria-label="설정"><svg class="i"><use href="#i-settings"/></svg></button>
   </div>
-  <div class="bar"><i id="st-bar" style="width:0"></i></div>
+
+  <div class="statpanel">
+    <div class="stats">
+      <div class="stat"><b id="st-mast">0</b><small>외운 단어</small></div>
+      <div class="stat"><b id="st-learn">0</b><small>학습 중</small></div>
+      <div class="stat"><b id="st-today">0</b><small>오늘</small></div>
+      <div class="stat"><b id="st-streak">0</b><small>연속 일수</small></div>
+    </div>
+    <div class="bar"><i id="st-bar" style="width:0"></i></div>
+  </div>
 
   <div class="row">
-    <button class="btn" style="flex:1" id="go-dict">📖 단어장</button>
-    <button class="btn" style="flex:1" id="go-stat">📊 학습 현황</button>
+    <button class="btn" style="flex:1" id="go-dict"><svg class="i"><use href="#i-book-open"/></svg> 단어장</button>
+    <button class="btn" style="flex:1" id="go-stat"><svg class="i"><use href="#i-chart-column"/></svg> 학습 현황</button>
   </div>
 
   <div class="label">범위</div>
-  <div class="seg" id="seg-level">
+  <div class="seg" id="seg-level" style="--count:3">
+    <i class="thumb"></i>
     <button data-v="all" class="on">전체</button>
     <button data-v="5">N5</button>
     <button data-v="4">N4</button>
   </div>
 
   <div class="label">문제 방향</div>
-  <div class="seg" id="seg-dir">
+  <div class="seg" id="seg-dir" style="--count:2">
+    <i class="thumb"></i>
     <button data-v="jp" class="on">日 → 한국어</button>
     <button data-v="ko">한국어 → 日</button>
   </div>
@@ -281,40 +439,33 @@
   <div class="label">모드</div>
   <div class="modes">
     <button class="mode" data-mode="quiz">
-      <span class="ic">🎯</span>
+      <span class="ic"><svg class="i"><use href="#i-target"/></svg></span>
       <span class="tx"><b>4지선다 퀴즈</b><small>콤보 · 점수 · 제한시간</small></span>
       <span class="cnt">10문제</span>
     </button>
     <button class="mode" data-mode="type">
-      <span class="ic">⌨️</span>
+      <span class="ic"><svg class="i"><use href="#i-keyboard"/></svg></span>
       <span class="tx"><b>타이핑</b><small>뜻 또는 읽기를 직접 입력</small></span>
       <span class="cnt">10문제</span>
     </button>
     <button class="mode" data-mode="flash">
-      <span class="ic">🃏</span>
+      <span class="ic"><svg class="i"><use href="#i-layers"/></svg></span>
       <span class="tx"><b>플래시카드</b><small>카드 뒤집고 안다/모른다</small></span>
       <span class="cnt">15장</span>
     </button>
     <button class="mode" data-mode="review" id="mode-review">
-      <span class="ic">🔁</span>
+      <span class="ic"><svg class="i"><use href="#i-repeat"/></svg></span>
       <span class="tx"><b>복습 (간격 반복)</b><small>틀렸거나 복습할 때가 된 단어만</small></span>
       <span class="cnt" id="due-cnt">0개</span>
     </button>
   </div>
 
-  <div class="footlinks">
-    <button id="go-manage">단어 관리</button>
-    <button id="tg-theme">🌙 테마</button>
-    <button id="tg-sound">🔊 소리</button>
-    <button id="tg-timer">⏱ 타이머</button>
-    <button id="tg-input">입력: 뜻</button>
-  </div>
 </section>
 
 <!-- ═══════════ 퀴즈 ═══════════ -->
 <section id="s-play" class="screen">
   <div class="qtop">
-    <button class="x" id="quit">✕</button>
+    <button class="x" id="quit" aria-label="그만두기"><svg class="i" style="width:20px;height:20px"><use href="#i-x"/></svg></button>
     <div class="prog"><i id="prog"></i></div>
     <div class="sc" id="score">0</div>
   </div>
@@ -367,7 +518,7 @@
 <!-- ═══════════ 학습 현황 ═══════════ -->
 <section id="s-stat" class="screen">
   <div class="head">
-    <button class="x" id="t-back" style="font-size:20px;color:var(--dim2)">←</button>
+    <button class="x" id="t-back" style="color:var(--dim2)" aria-label="뒤로"><svg class="i" style="width:20px;height:20px"><use href="#i-arrow-left"/></svg></button>
     <h2>학습 현황</h2>
   </div>
   <div class="list" style="border:0; margin-top:4px" id="t-body"></div>
@@ -376,8 +527,13 @@
 <!-- ═══════════ 단어장 (사전) ═══════════ -->
 <section id="s-dict" class="screen">
   <div class="head">
-    <button class="x" id="d-back" style="font-size:20px;color:var(--dim2)">←</button>
+    <button class="x" id="d-back" style="color:var(--dim2)" aria-label="뒤로"><svg class="i" style="width:20px;height:20px"><use href="#i-arrow-left"/></svg></button>
     <h2>단어장</h2>
+  </div>
+  <div class="seg" id="d-mode" style="--count:2; margin-bottom:11px">
+    <i class="thumb"></i>
+    <button data-v="list" class="on">목록</button>
+    <button data-v="card">카드</button>
   </div>
   <input class="field" id="d-search" placeholder="검색 — 한자 · 읽기 · 뜻">
   <div class="chips" id="d-chips">
@@ -390,14 +546,24 @@
   </div>
   <div class="muted" id="d-count" style="margin-top:6px"></div>
   <div class="list" id="d-list"></div>
+
+  <div class="deck" id="d-deck" style="display:none">
+    <div class="dcard" id="dc"></div>
+    <div class="dnav">
+      <button class="iconbtn" id="dc-prev" aria-label="이전 단어"><svg class="i"><use href="#i-arrow-left"/></svg></button>
+      <div class="dcount" id="dc-count">0 / 0</div>
+      <button class="iconbtn" id="dc-shuffle" aria-label="다시 섞기"><svg class="i"><use href="#i-repeat"/></svg></button>
+      <button class="iconbtn" id="dc-next" aria-label="다음 단어"><svg class="i"><use href="#i-arrow-right"/></svg></button>
+    </div>
+  </div>
 </section>
 
 <!-- ═══════════ 단어 관리 ═══════════ -->
 <section id="s-manage" class="screen">
   <div class="head">
-    <button class="x" id="m-back" style="font-size:20px;color:var(--dim2)">←</button>
+    <button class="x" id="m-back" style="color:var(--dim2)" aria-label="뒤로"><svg class="i" style="width:20px;height:20px"><use href="#i-arrow-left"/></svg></button>
     <h2>단어 관리</h2>
-    <button class="btn sm" id="m-toggle-add">+ 추가</button>
+    <button class="btn sm" id="m-toggle-add"><svg class="i"><use href="#i-plus"/></svg> 추가</button>
   </div>
 
   <div id="addpanel" style="display:none; gap:8px; flex-direction:column; margin-bottom:12px">
@@ -418,32 +584,93 @@
   <input class="field" id="m-search" placeholder="검색 (단어 · 읽기 · 뜻)">
   <div class="muted" id="m-count" style="margin-top:8px"></div>
   <div class="list" id="m-list"></div>
-  <div class="label">백업 · 기기 이동</div>
-  <div class="row">
-    <button class="btn sm" style="flex:1" id="m-jexport">📤 내보내기 (JSON)</button>
-    <button class="btn sm" style="flex:1" id="m-jimport">📥 불러오기</button>
-  </div>
-  <input type="file" id="m-file" accept="application/json,.json" style="display:none">
+</section>
 
-  <div class="imp" id="importpanel" style="display:none">
-    <div id="imp-info"></div>
-    <div class="row" style="margin-top:11px">
-      <button class="btn sm primary" style="flex:1.3" id="imp-merge">병합</button>
-      <button class="btn sm" style="flex:1" id="imp-replace">덮어쓰기</button>
-      <button class="btn sm ghost" style="flex:.7" id="imp-cancel">취소</button>
-    </div>
-    <div class="muted" style="margin-top:8px;font-size:11.5px">
-      병합 = 단어별로 <b>더 최근에 공부한 쪽</b>을 남기고 내 단어는 합칩니다 · 덮어쓰기 = 이 기기 기록을 전부 버립니다
-    </div>
+<!-- ═══════════ 설정 ═══════════ -->
+<section id="s-settings" class="screen">
+  <div class="head">
+    <button class="x" id="set-back" style="color:var(--dim2)"><svg class="i" style="width:20px;height:20px"><use href="#i-arrow-left"/></svg></button>
+    <h2>설정</h2>
   </div>
 
-  <div class="row" style="margin-top:8px">
-    <button class="btn sm ghost" style="flex:1" id="m-link">🔗 진도 링크</button>
-    <button class="btn sm ghost" style="flex:1" id="m-urlsync">URL 자동저장: 끔</button>
-  </div>
-  <div class="row" style="margin-top:8px">
-    <button class="btn sm ghost" style="flex:1" id="m-export">CSV 내보내기</button>
-    <button class="btn sm ghost" style="flex:1" id="m-reset">학습기록 초기화</button>
+  <div class="setbody">
+    <div class="label" style="margin-top:0">단어</div>
+    <button class="srow" id="go-manage">
+      <svg class="i"><use href="#i-list"/></svg>
+      <span class="t">단어 관리<small id="v-wordinfo">단어 추가 · 삭제 · 검색</small></span>
+      <svg class="i nav"><use href="#i-chevron-right"/></svg>
+    </button>
+
+    <div class="label">화면 · 소리</div>
+    <button class="srow" id="tg-theme">
+      <svg class="i"><use href="#i-moon" id="ic-theme"/></svg>
+      <span class="t">테마<small>다크 / 라이트 전환</small></span>
+      <span class="v" id="v-theme">다크</span>
+    </button>
+    <button class="srow" id="tg-sound">
+      <svg class="i"><use href="#i-volume-2" id="ic-sound"/></svg>
+      <span class="t">효과음<small>정답 · 오답 소리</small></span>
+      <span class="v" id="v-sound">켬</span>
+    </button>
+
+    <div class="label">문제</div>
+    <button class="srow" id="tg-timer">
+      <svg class="i"><use href="#i-timer" id="ic-timer"/></svg>
+      <span class="t">제한시간<small>퀴즈 문제당 타이머</small></span>
+      <span class="v" id="v-timer">켬</span>
+    </button>
+    <button class="srow" id="tg-input">
+      <svg class="i"><use href="#i-pencil"/></svg>
+      <span class="t">타이핑 입력 대상<small>타이핑 모드에서 무엇을 적을지</small></span>
+      <span class="v" id="v-input">뜻</span>
+    </button>
+
+    <div class="label">백업 · 기기 이동</div>
+    <button class="srow" id="m-jexport">
+      <svg class="i"><use href="#i-upload"/></svg>
+      <span class="t">JSON 내보내기<small id="v-exportinfo">진도 · 내 단어를 파일로 저장</small></span>
+    </button>
+    <button class="srow" id="m-jimport">
+      <svg class="i"><use href="#i-download"/></svg>
+      <span class="t">JSON 불러오기<small>내보낸 파일에서 복원 · 병합</small></span>
+    </button>
+    <input type="file" id="m-file" accept="application/json,.json" style="display:none">
+
+    <div class="imp" id="importpanel" style="display:none">
+      <div id="imp-info"></div>
+      <div class="row" style="margin-top:11px">
+        <button class="btn sm primary" style="flex:1.3" id="imp-merge">병합</button>
+        <button class="btn sm" style="flex:1" id="imp-replace">덮어쓰기</button>
+        <button class="btn sm ghost" style="flex:.7" id="imp-cancel">취소</button>
+      </div>
+      <div class="muted" style="margin-top:8px;font-size:14px">
+        병합 = 단어별로 <b>더 최근에 공부한 쪽</b>을 남기고 내 단어는 합칩니다 · 덮어쓰기 = 이 기기 기록을 전부 버립니다
+      </div>
+    </div>
+
+    <button class="srow" id="m-link" style="margin-top:7px">
+      <svg class="i"><use href="#i-link"/></svg>
+      <span class="t">진도 링크 복사<small>주소 하나로 다른 기기에 옮기기</small></span>
+    </button>
+    <button class="srow" id="m-urlsync">
+      <svg class="i"><use href="#i-arrow-left-right"/></svg>
+      <span class="t">URL 자동저장<small>세션이 끝날 때마다 주소창 갱신</small></span>
+      <span class="v" id="v-urlsync">끔</span>
+    </button>
+
+    <div class="label">데이터</div>
+    <button class="srow" id="m-export">
+      <svg class="i"><use href="#i-table-2"/></svg>
+      <span class="t">CSV 내보내기<small>엑셀 · 스프레드시트용</small></span>
+    </button>
+    <button class="srow danger" id="m-reset">
+      <svg class="i"><use href="#i-rotate-ccw"/></svg>
+      <span class="t">학습기록 초기화<small>단어 목록은 그대로 유지됩니다</small></span>
+    </button>
+
+    <div class="muted" style="margin-top:18px; font-size:14px; text-align:center; padding-bottom:6px">
+      아이콘 — Lucide (ISC License)
+    </div>
   </div>
 </section>
 
@@ -468,7 +695,7 @@ let history  = DB.get('history', {});    // "YYYY-MM-DD" -> [푼 문제, 맞은 
 let custom   = DB.get('custom', []);     // 사용자 추가 [w,r,m,lv]
 let removed  = DB.get('removed', []);    // 삭제한 key
 let opt      = Object.assign(
-  {level:'all', dir:'jp', sound:true, timer:true, input:'m', theme:'dark', urlsync:false},
+  {level:'all', dir:'jp', sound:true, timer:true, input:'m', theme:'dark', urlsync:false, dictview:'list'},
   DB.get('opt', {}));
 
 const save = () => {
@@ -615,21 +842,45 @@ function renderHome(){
   $('due-cnt').textContent = d+'개';
   $('mode-review').disabled = d===0;
 
-  document.querySelectorAll('#seg-level button').forEach(b=>b.classList.toggle('on', b.dataset.v===opt.level));
-  document.querySelectorAll('#seg-dir button').forEach(b=>b.classList.toggle('on', b.dataset.v===opt.dir));
-  $('tg-sound').textContent  = (opt.sound?'🔊':'🔇')+' 소리';
-  $('tg-timer').textContent  = (opt.timer?'⏱':'⏸')+' 타이머';
-  $('tg-input').textContent  = '입력: '+(opt.input==='m'?'뜻':'읽기');
-  $('tg-theme').textContent  = (opt.theme==='dark'?'🌙':'☀️')+' 테마';
+  setSeg('seg-level', opt.level);
+  setSeg('seg-dir',   opt.dir);
 }
 function applyTheme(){ document.documentElement.dataset.theme = opt.theme }
 
+/* 세그먼트 — 선택 표시와 미끄러지는 썸 위치를 같이 옮긴다 */
+function setSeg(id, value){
+  const seg = $(id), btns = [...seg.querySelectorAll('button')];
+  btns.forEach(b => b.classList.toggle('on', b.dataset.v === value));
+  const n = btns.findIndex(b => b.dataset.v === value);
+  if(n >= 0) seg.style.setProperty('--n', n);
+}
+
+/* 설정 화면 — 값 표시만 갱신 (아이콘은 <use href> 교체) */
+function renderSettings(){
+  const ic = (id, name) => $(id).setAttribute('href', '#i-'+name);
+  $('v-theme').textContent   = opt.theme==='dark' ? '다크' : '라이트';
+  ic('ic-theme', opt.theme==='dark' ? 'moon' : 'sun');
+  $('v-sound').textContent   = opt.sound ? '켬' : '끔';
+  ic('ic-sound', opt.sound ? 'volume-2' : 'volume-x');
+  $('v-timer').textContent   = opt.timer ? '켬' : '끔';
+  ic('ic-timer', opt.timer ? 'timer' : 'timer-off');
+  $('v-input').textContent   = opt.input==='m' ? '뜻' : '읽기';
+  $('v-urlsync').textContent = opt.urlsync ? '켬' : '끔';
+  $('v-exportinfo').textContent =
+    `진도 ${Object.keys(progress).length}개 · 내 단어 ${custom.length}개`;
+  $('v-wordinfo').textContent =
+    `전체 ${ALL.length}개 · 내 단어 ${custom.length}개`;
+}
+
 $('seg-level').onclick = e => { const b=e.target.closest('button'); if(!b) return; opt.level=b.dataset.v; save(); renderHome() };
 $('seg-dir').onclick   = e => { const b=e.target.closest('button'); if(!b) return; opt.dir=b.dataset.v; save(); renderHome() };
-$('tg-sound').onclick  = () => { opt.sound=!opt.sound; save(); renderHome(); beep('ok') };
-$('tg-timer').onclick  = () => { opt.timer=!opt.timer; save(); renderHome() };
-$('tg-input').onclick  = () => { opt.input = opt.input==='m'?'r':'m'; save(); renderHome() };
-$('tg-theme').onclick  = () => { opt.theme = opt.theme==='dark'?'light':'dark'; save(); applyTheme(); renderHome() };
+$('tg-sound').onclick  = () => { opt.sound=!opt.sound; save(); renderSettings(); beep('ok') };
+$('tg-timer').onclick  = () => { opt.timer=!opt.timer; save(); renderSettings() };
+$('tg-input').onclick  = () => { opt.input = opt.input==='m'?'r':'m'; save(); renderSettings() };
+$('tg-theme').onclick  = () => { opt.theme = opt.theme==='dark'?'light':'dark'; save(); applyTheme(); renderSettings() };
+
+$('go-settings').onclick  = ()=>{ renderSettings(); show('s-settings') };
+$('set-back').onclick     = ()=>{ renderHome(); show('s-home') };
 document.querySelectorAll('.mode').forEach(b => b.onclick = () => start(b.dataset.mode));
 
 /* ══════════════════════════════════════════════════════════
@@ -989,8 +1240,16 @@ function renderStat(){
    단어장 (사전)
    ══════════════════════════════════════════════════════════ */
 let dictFilter = 'all', dictOpen = null;
+let deck = [], deckI = 0;          // 카드 모드용 셔플된 덱과 현재 위치
 
-$('go-dict').onclick  = ()=>{ renderDict(); show('s-dict') };
+$('go-dict').onclick  = ()=>{ setSeg('d-mode', opt.dictview); renderDict(); show('s-dict') };
+$('d-mode').onclick = e => {
+  const b = e.target.closest('button'); if(!b) return;
+  opt.dictview = b.dataset.v; save();
+  setSeg('d-mode', opt.dictview);
+  dictOpen = null;
+  renderDict();
+};
 $('d-back').onclick   = ()=>{ renderHome(); show('s-home') };
 $('d-search').addEventListener('input', renderDict);
 $('d-chips').onclick  = e => {
@@ -1015,36 +1274,110 @@ function renderDict(){
     return (w.w+w.r+w.m).toLowerCase().includes(q);
   });
 
-  $('d-count').textContent = `${list.length}개` + (dictFilter==='all' && !q ? ` · 눌러서 예문 보기` : '');
+  const cardMode = opt.dictview === 'card';
+  $('d-count').textContent = `${list.length}개`
+    + (dictFilter==='all' && !q ? (cardMode ? ' · 좌우로 밀어서 넘기기' : ' · 눌러서 예문 보기') : '');
+
+  $('d-list').style.display = cardMode ? 'none' : '';
+  $('d-deck').style.display = cardMode ? 'flex' : 'none';
+  if(cardMode){                       // 필터가 바뀔 때마다 새로 섞는다
+    deck = shuffle(list.slice()); deckI = 0;
+    renderCard(0);
+    return;
+  }
+
   $('d-list').innerHTML = list.slice(0,500).map(w=>{
     const k = key(w), p = prg(k), open = dictOpen===k;
     const ex = EXAMPLES[w.w];
-    return `<div class="dictitem">
+    return `<div class="dictitem${open?' open':''}">
       <div class="dictrow" data-k="${k}">
-        <span class="pill l${p.box}" title="${BOXNAME[p.box]}"></span>
-        <span class="w">
-          <b class="jp">${w.w}</b>
-          <div class="rd jp">${w.r}</div>
-        </span>
-        <span class="mean">${w.m}</span>
-        <span class="arw">${open?'▲':'▼'}</span>
+        <div class="dhead"><span class="pill l${p.box}" title="${BOXNAME[p.box]}"></span><b class="jp">${w.w}</b></div>
+        <div class="rd jp">${w.r}</div>
+        <div class="mean">${w.m}</div>
       </div>
       ${open ? `<div class="ex">${ ex
         ? `<div class="ja jp">${ex[0]}</div>
            <div class="rd jp">${ex[1]}</div>
            <div class="ko">${ex[2]}</div>`
         : `<div class="none">예문이 아직 없어요. examples.js에 추가하면 여기 표시됩니다.</div>` }
-        <div class="ko" style="border:0;padding-top:6px;color:var(--dim2);font-size:12px">
+        <div class="ko" style="border:0;padding-top:6px;color:var(--dim2);font-size:14px">
           ${w.lv?'N'+w.lv:'내 단어'} · ${BOXNAME[p.box]} · 맞음 ${p.r} / 틀림 ${p.w}</div>
       </div>` : ''}
     </div>`;
-  }).join('') + (list.length>500 ? '<div class="muted" style="padding:12px 0">…검색으로 좁혀보세요</div>' : '');
+  }).join('') + (list.length>500 ? '<div class="muted wide" style="padding:12px 0">…검색으로 좁혀보세요</div>' : '');
 
   $('d-list').querySelectorAll('.dictrow').forEach(r => r.onclick = ()=>{
     dictOpen = dictOpen===r.dataset.k ? null : r.dataset.k;
     renderDict();
   });
 }
+
+/* ══════════════════════════════════════════════════════════
+   단어장 카드 모드 — 한 화면에 한 단어, 랜덤 순서로 넘겨 본다
+   ══════════════════════════════════════════════════════════ */
+function renderCard(dir){
+  const el = $('dc');
+  el.style.transition = ''; el.style.transform = '';
+
+  if(!deck.length){
+    el.innerHTML = '<div class="inner"><div class="noex">조건에 맞는 단어가 없어요.<br>필터를 바꾸거나 검색어를 지워보세요.</div></div>';
+    $('dc-count').textContent = '0 / 0';
+    return;
+  }
+  deckI = (deckI % deck.length + deck.length) % deck.length;   // 양쪽으로 순환
+  const w = deck[deckI], pr = prg(key(w)), ex = EXAMPLES[w.w];
+  el.innerHTML =
+    `<span class="tag">${w.lv?'N'+w.lv:'내 단어'} · ${esc(BOXNAME[pr.box])}</span>
+     <div class="inner">
+       <div class="kanji jp">${esc(w.w)}</div>
+       <div class="kana jp">${esc(w.r)}</div>
+       <div class="mean">${esc(w.m)}</div>
+       <div class="rule"></div>
+       ${ex ? `<div class="exj jp">${esc(ex[0])}</div>
+               <div class="exr jp">${esc(ex[1])}</div>
+               <div class="exk">${esc(ex[2])}</div>`
+            : `<div class="noex">예문이 아직 없어요.</div>`}
+     </div>`;
+  $('dc-count').textContent = `${deckI+1} / ${deck.length}`;
+  if(dir){                                   // 넘어온 방향에서 미끄러져 들어온다
+    el.style.animation = 'none'; void el.offsetWidth;
+    el.style.animation = `card${dir>0?'R':'L'} .3s cubic-bezier(.2,.7,.3,1)`;
+  }
+}
+const cardStep = d => { if(deck.length){ deckI += d; renderCard(d) } };
+
+$('dc-prev').onclick = ()=> cardStep(-1);
+$('dc-next').onclick = ()=> cardStep(1);
+$('dc-shuffle').onclick = ()=>{
+  if(!deck.length) return;
+  shuffle(deck); deckI = 0; renderCard(1); toast('다시 섞었어요');
+};
+
+/* 손가락으로 밀기 — 미는 동안 카드가 따라오고, 충분히 밀면 넘어간다 */
+(function(){
+  const el = $('dc'); let x0 = null, dx = 0;
+  el.addEventListener('touchstart', e=>{ x0 = e.touches[0].clientX; dx = 0; el.style.transition='none' }, {passive:true});
+  el.addEventListener('touchmove',  e=>{
+    if(x0===null) return;
+    dx = e.touches[0].clientX - x0;
+    el.style.transform = `translateX(${dx*.5}px)`;
+  }, {passive:true});
+  el.addEventListener('touchend', ()=>{
+    if(x0===null) return;
+    const d = Math.abs(dx) > 55 ? (dx < 0 ? 1 : -1) : 0;
+    if(d) cardStep(d);
+    else { el.style.transition = 'transform .22s'; el.style.transform = '' }
+    x0 = null;
+  });
+})();
+
+/* 키보드 — 단어장 카드 모드일 때만 */
+document.addEventListener('keydown', e=>{
+  if(!$('s-dict').classList.contains('on') || opt.dictview !== 'card') return;
+  if(e.target.tagName === 'INPUT') return;                 // 검색 중에는 방해하지 않는다
+  if(e.key === 'ArrowRight'){ e.preventDefault(); cardStep(1) }
+  if(e.key === 'ArrowLeft'){  e.preventDefault(); cardStep(-1) }
+});
 
 /* ══════════════════════════════════════════════════════════
    진도를 URL에 담기 (백업 · 기기 이동용)
@@ -1146,7 +1479,7 @@ $('m-link').onclick = async ()=>{
 };
 $('m-urlsync').onclick = ()=>{
   opt.urlsync = !opt.urlsync; save();
-  $('m-urlsync').textContent = 'URL 자동저장: ' + (opt.urlsync?'켬':'끔');
+  renderSettings();
   if(opt.urlsync){ syncURL(); toast('세션이 끝날 때마다 주소창이 갱신됩니다') }
 };
 
@@ -1185,7 +1518,8 @@ function importFromHash(){
    단어 관리
    ══════════════════════════════════════════════════════════ */
 $('go-manage').onclick = ()=>{ renderList(); show('s-manage') };
-$('m-back').onclick = ()=>{ renderHome(); show('s-home') };
+/* 단어 관리는 설정에서 들어오므로 뒤로가기도 설정으로 (홈 통계는 미리 갱신) */
+$('m-back').onclick = ()=>{ renderHome(); renderSettings(); show('s-settings') };
 $('m-toggle-add').onclick = ()=>{ const p=$('addpanel'); p.style.display = p.style.display==='none' ? 'flex' : 'none' };
 $('m-search').addEventListener('input', renderList);
 
@@ -1199,8 +1533,8 @@ function renderList(){
       <span class="pill l${b}"></span>
       <span class="w"><b class="jp">${w.w}</b><small class="jp">${w.r} · ${w.m}</small></span>
       <span class="lv">${w.lv?'N'+w.lv:'MY'}</span>
-      <button class="del" data-k="${key(w)}">✕</button></div>`;
-  }).join('') + (list.length>400 ? '<div class="muted" style="padding:12px 0">…검색으로 좁혀보세요</div>' : '');
+      <button class="del" data-k="${key(w)}" aria-label="삭제"><svg class="i"><use href="#i-trash-2"/></svg></button></div>`;
+  }).join('') + (list.length>400 ? '<div class="muted wide" style="padding:12px 0">…검색으로 좁혀보세요</div>' : '');
   $('m-list').querySelectorAll('.del').forEach(b => b.onclick = ()=>{
     const k = b.dataset.k;
     custom = custom.filter(a => key(toWord(a)) !== k);
@@ -1367,7 +1701,7 @@ function applyImport(mode){
   DB.set('custom', custom); DB.set('removed', removed);
   rebuild(); save(); syncURL(); applyTheme();
   pendingImport = null; $('importpanel').style.display = 'none';
-  renderList();
+  renderList(); renderHome(); renderSettings();
   toast(mode==='replace' ? '덮어쓰기 완료' : `병합 완료 · 진도 ${Object.keys(progress).length}개`);
 }
 
@@ -1380,14 +1714,13 @@ $('m-export').onclick = ()=>{
 $('m-reset').onclick = ()=>{
   if(!confirm('학습 기록(암기 단계 · 통계 · 일별 그래프)을 모두 지웁니다.\n단어 목록은 유지됩니다.')) return;
   progress = {}; history = {}; stats = {best:0, day:'', today:0, streak:0};
-  save(); renderList(); toast('초기화했어요');
+  save(); renderList(); renderSettings(); toast('초기화했어요');
 };
 
 /* ══════════════════════════════════════════════════════════ */
 applyTheme();
 importFromHash();
-$('m-urlsync').textContent = 'URL 자동저장: ' + (opt.urlsync?'켬':'끔');
-touchDay(); save(); renderHome();
+touchDay(); save(); renderHome(); renderSettings();
 </script>
 </body>
 </html>
