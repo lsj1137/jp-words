@@ -20,9 +20,9 @@
     --fg:#f4efeb; --dim:#b3a49b; --dim2:#a89a90;
     /* 주색 두 갈래: 글자·아이콘용(밝게) / 흰 글자를 얹는 면용(어둡게) */
     --accent:#e2543f; --accent-fill:#cf4028; --accent-tx:#f2705a; --accent-soft:#3d211b;
-    --ok:#5fbf7d; --ok-soft:#18321f;
-    --bad:#e2543f; --bad-soft:#3d1c17;
-    --gold:#e9b949;
+    --ok:#5fbf7d; --ok-tx:#5fbf7d; --ok-soft:#18321f;
+    --bad:#e2543f; --bad-tx:#f2705a; --bad-soft:#3d1c17;
+    --gold:#e9b949; --gold-tx:#e9b949;
     --lift-sm:0 1px 2px #00000047;
     --lift:0 2px 4px #0000003d, 0 8px 20px #00000030;
     --r:16px; --r-sm:11px;
@@ -36,9 +36,9 @@
     --track:#00000014;
     --fg:#241f1c; --dim:#5f534b; --dim2:#6d5f56;
     --accent:#c8442c; --accent-fill:#c8442c; --accent-tx:#ae3420; --accent-soft:#fae7e1;
-    --ok:#2e8b57; --ok-soft:#e4f2e9;
-    --bad:#c8442c; --bad-soft:#fae7e1;
-    --gold:#a8760c;
+    --ok:#2e8b57; --ok-tx:#1b6039; --ok-soft:#e4f2e9;
+    --bad:#c8442c; --bad-tx:#a5331e; --bad-soft:#fae7e1;
+    --gold:#a8760c; --gold-tx:#7a5400;
     --lift-sm:0 1px 2px #0000000f;
     --lift:0 2px 4px #0000000d, 0 8px 20px #00000012;
     color-scheme:light;
@@ -105,8 +105,11 @@
   .statpanel{background:linear-gradient(158deg, var(--s3), var(--card));
              border-radius:var(--r); box-shadow:var(--lift);
              padding:18px 18px 16px; margin-bottom:20px}
-  .stats{display:grid; grid-template-columns:repeat(4,1fr); margin-bottom:14px}
-  .stat{text-align:center}
+  .stats{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:14px}
+  .stat{text-align:center; background:var(--bg2); border-radius:12px; padding:12px 8px}
+  /* 홈 통계판 안에서는 판이 이미 면을 만들므로 타일은 투명하게 */
+  .statpanel .stats{gap:0}
+  .statpanel .stat{background:none; padding:0}
   .stat b{display:block; font-size:24px; font-weight:650; line-height:1.1;
           font-variant-numeric:tabular-nums; letter-spacing:-.8px}
   .stat small{display:block; color:var(--dim2); font-size:14px; margin-top:6px; letter-spacing:-.2px}
@@ -173,7 +176,7 @@
   .timer i{display:block; height:100%; background:var(--gold); width:100%}
   .timer.hide{visibility:hidden}
 
-  .combo{height:22px; text-align:center; font-size:14px; font-weight:700; color:var(--gold);
+  .combo{height:22px; text-align:center; font-size:14px; font-weight:700; color:var(--gold-tx);
          opacity:0; transition:.2s; letter-spacing:.5px}
   .combo.on{opacity:1}
 
@@ -186,6 +189,9 @@
   .qword{font-size:46px; font-weight:600; line-height:1.22; word-break:keep-all; letter-spacing:-.5px}
   .qword.ko{font-size:32px}
   .qread{margin-top:13px; font-size:16px; color:var(--dim); min-height:22px}
+  /* 한글 발음 — .jp 글꼴 안에 섞여도 한글은 한글 글꼴로 나오게 */
+  .krd{font-family:"Pretendard","Apple SD Gothic Neo","Noto Sans KR",-apple-system,system-ui,sans-serif;
+       color:var(--gold-tx)}
   .qread.hidden{opacity:0}
 
   .choices{display:grid; gap:8px}
@@ -211,10 +217,10 @@
   .typing input:focus{background:var(--card); box-shadow:0 0 0 3px var(--accent-soft)}
   .typing input.ok{background:var(--ok-soft); box-shadow:0 0 0 3px var(--ok-soft)}
   .typing input.bad{background:var(--bad-soft); box-shadow:0 0 0 3px var(--bad-soft)}
-  .kana{min-height:26px; text-align:center; font-size:19px; color:var(--gold)}
+  .kana{min-height:26px; text-align:center; font-size:19px; color:var(--gold-tx)}
   .verdict{min-height:24px; text-align:center; font-size:14px}
-  .verdict b{color:var(--ok)}
-  .verdict i{color:var(--bad); font-style:normal}
+  .verdict b{color:var(--ok-tx)}
+  .verdict i{color:var(--bad-tx); font-style:normal}
 
   .qfoot{margin-top:auto; padding-top:16px}
 
@@ -228,7 +234,10 @@
   .wrongbox span{color:var(--dim); text-align:right; flex:none}
 
   /* ---------- 관리 ---------- */
-  .head{display:flex; align-items:center; gap:10px; margin-bottom:18px}
+  .head{display:flex; align-items:center; gap:6px; margin-bottom:18px}
+  /* 아이콘 크기가 곧 버튼 크기였다 — 손가락이 닿을 만큼 넓힌다 */
+  .head .x{padding:11px 12px; margin-left:-12px; border-radius:11px; line-height:1; transition:.13s}
+  .head .x:hover{background:var(--bg2); color:var(--fg)}
   .head h2{margin:0; font-size:19px; flex:1; letter-spacing:-.3px}
   .field{width:100%; padding:13px 15px; border-radius:var(--r-sm); background:var(--bg2);
          border:0; color:var(--fg); outline:none; font:inherit; font-size:14px;
@@ -292,14 +301,19 @@
   .dcard .inner{margin:auto; width:100%}
   .dcard .tag{position:absolute; top:16px; right:18px; font-size:14px; color:var(--dim2)}
   .dcard .kanji{font-size:54px; font-weight:600; line-height:1.15; letter-spacing:-1px; word-break:keep-all}
-  .dcard .kana{font-size:20px; color:var(--gold); margin-top:13px}
+  .dcard .kana{font-size:20px; color:var(--gold-tx); margin-top:13px}
   .dcard .mean{font-size:22px; margin-top:18px; word-break:keep-all; line-height:1.4}
   .dcard .rule{width:30px; height:2px; background:var(--accent); border-radius:2px; margin:26px auto 0}
   .dcard .exj{font-size:16px; line-height:1.7; margin-top:20px}
   .dcard .exr{font-size:14px; color:var(--dim); margin-top:7px; line-height:1.5}
   .dcard .exk{font-size:14px; color:var(--dim2); margin-top:9px}
   .dcard .noex{font-size:14px; color:var(--dim2); margin-top:22px}
-  .dnav{display:flex; align-items:center; justify-content:center; gap:10px; padding-top:14px}
+  .dmark{display:flex; gap:8px; padding-top:12px}
+  .dmark .btn{flex:1; padding:14px 0}
+  .dmark .no{background:var(--bad-soft); color:var(--bad-tx)}
+  .dmark .yes{background:var(--ok-soft); color:var(--ok-tx)}
+  .dcard .kanako{font-size:16px; color:var(--dim); margin-top:6px}
+  .dnav{display:flex; align-items:center; justify-content:center; gap:10px; padding-top:10px}
   .dcount{font-size:14px; color:var(--dim); font-variant-numeric:tabular-nums;
           min-width:86px; text-align:center}
   @keyframes cardR{from{opacity:0; transform:translateX(42px)} to{opacity:1; transform:none}}
@@ -391,6 +405,7 @@
 <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14"/> <path d="M12 5v14"/></symbol>
 <symbol id="i-arrow-left-right" viewBox="0 0 24 24"><path d="M8 3 4 7l4 4"/> <path d="M4 7h16"/> <path d="m16 21 4-4-4-4"/> <path d="M20 17H4"/></symbol>
 <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/> <path d="m15 5 4 4"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
 <symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14"/> <path d="m12 5 7 7-7 7"/></symbol>
 <symbol id="i-list" viewBox="0 0 24 24"><path d="M3 5h.01"/> <path d="M3 12h.01"/> <path d="M3 19h.01"/> <path d="M8 5h13"/> <path d="M8 12h13"/> <path d="M8 19h13"/></symbol>
 <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
@@ -549,6 +564,10 @@
 
   <div class="deck" id="d-deck" style="display:none">
     <div class="dcard" id="dc"></div>
+    <div class="dmark">
+      <button class="btn no" id="dc-no"><svg class="i"><use href="#i-x"/></svg> 모른다</button>
+      <button class="btn yes" id="dc-yes"><svg class="i"><use href="#i-check"/></svg> 안다</button>
+    </div>
     <div class="dnav">
       <button class="iconbtn" id="dc-prev" aria-label="이전 단어"><svg class="i"><use href="#i-arrow-left"/></svg></button>
       <div class="dcount" id="dc-count">0 / 0</div>
@@ -763,7 +782,62 @@ function romaji(s){
   return out;
 }
 /* 사전·정답 표시용 한 줄: "としょかん · 도서관" */
-const readLine = w => w.r + ' · ' + w.m;
+/* かな → 한글 발음 (국립국어원 외래어 표기법 · 일본어 표기 세칙)
+     · か·た행은 어두에서 예사소리(가·다), 어중·어말에서 거센소리(카·타)
+     · ん은 받침 ㄴ, 촉음 っ은 받침 ㅅ
+     · 장모음(ー, 같은 모음 반복, お단+う)은 적지 않는다 — 단 えい는 '에이'로 적는다 */
+  const K_HEAD = { か:'가',き:'기',く:'구',け:'게',こ:'고', た:'다',ち:'지',つ:'쓰',て:'데',と:'도',
+    きゃ:'갸',きゅ:'규',きょ:'교', ちゃ:'자',ちゅ:'주',ちょ:'조' };
+  const K_MID = {
+    あ:'아',い:'이',う:'우',え:'에',お:'오',
+    か:'카',き:'키',く:'쿠',け:'케',こ:'코',   が:'가',ぎ:'기',ぐ:'구',げ:'게',ご:'고',
+    さ:'사',し:'시',す:'스',せ:'세',そ:'소',   ざ:'자',じ:'지',ず:'즈',ぜ:'제',ぞ:'조',
+    た:'타',ち:'치',つ:'쓰',て:'테',と:'토',   だ:'다',ぢ:'지',づ:'즈',で:'데',ど:'도',
+    な:'나',に:'니',ぬ:'누',ね:'네',の:'노',
+    は:'하',ひ:'히',ふ:'후',へ:'헤',ほ:'호',   ば:'바',び:'비',ぶ:'부',べ:'베',ぼ:'보',
+    ぱ:'파',ぴ:'피',ぷ:'푸',ぺ:'페',ぽ:'포',
+    ま:'마',み:'미',む:'무',め:'메',も:'모',   や:'야',ゆ:'유',よ:'요',
+    ら:'라',り:'리',る:'루',れ:'레',ろ:'로',   わ:'와',を:'오',
+    きゃ:'캬',きゅ:'큐',きょ:'쿄',  ぎゃ:'갸',ぎゅ:'규',ぎょ:'교',
+    しゃ:'샤',しゅ:'슈',しょ:'쇼',  じゃ:'자',じゅ:'주',じょ:'조',
+    ちゃ:'차',ちゅ:'추',ちょ:'초',  にゃ:'냐',にゅ:'뉴',にょ:'뇨',
+    ひゃ:'햐',ひゅ:'휴',ひょ:'효',  びゃ:'뱌',びゅ:'뷰',びょ:'뵤',
+    ぴゃ:'퍄',ぴゅ:'퓨',ぴょ:'표',  みゃ:'먀',みゅ:'뮤',みょ:'묘',
+    りゃ:'랴',りゅ:'류',りょ:'료'
+  };
+  const V_A='あかがさざただなはばぱまやらわ', V_I='いきぎしじちぢにひびぴみり',
+        V_U='うくぐすずつづぬふぶぷむゆる',  V_E='えけげせぜてでねへべぺめれ',
+        V_O='おこごそぞとどのほぼぽもよろを';
+  const kvowel = k => { const c=k.length>1?k[1]:k;
+    if(c==='ゃ') return 'a'; if(c==='ゅ') return 'u'; if(c==='ょ') return 'o';
+    return V_A.includes(c)?'a':V_I.includes(c)?'i':V_U.includes(c)?'u':V_E.includes(c)?'e':V_O.includes(c)?'o':'' };
+  /* 마지막 음절에 받침 붙이기 (이미 받침이 있으면 그대로) */
+  const addJong = (s,j) => { const c=s.charCodeAt(s.length-1)-0xAC00;
+    return (c<0||c>11171||c%28!==0) ? s : s.slice(0,-1)+String.fromCharCode(0xAC00+c+j) };
+
+  function kanaToKo(kana){
+    const src = String(kana).replace(/[ァ-ヶ]/g, c=>String.fromCharCode(c.charCodeAt(0)-0x60));
+    let out='', head=true, lastV='';
+    for(let i=0;i<src.length;i++){
+      const one=src[i], two=src.slice(i,i+2);
+      if(one==='ー') continue;                                   // 장음 부호
+      if(one==='ん'){ out=addJong(out,4);  lastV=''; continue }   // 받침 ㄴ
+      if(one==='っ'){ out=addJong(out,19); lastV=''; continue }   // 받침 ㅅ
+      const key = (K_MID[two]||K_HEAD[two]) ? two : (K_MID[one] ? one : null);
+      if(!key){ out+=one; head=false; lastV=''; continue }
+      const v = kvowel(key);
+      // 장모음은 적지 않는다 (같은 모음 반복 / お단 뒤의 う). えい는 예외로 적는다.
+      // 장모음 규칙은 '홀로 쓰인 모음 가나'에만 적용된다 (자음+모음 음절은 건너뛰면 안 됨)
+      if('あいうえお'.includes(key) && ((v===lastV && v!=='') || (key==='う' && lastV==='o'))){ lastV=v; continue }
+      out += (head && K_HEAD[key]) ? K_HEAD[key] : K_MID[key];
+      i += key.length-1; head=false; lastV=v;
+    }
+    return out;
+  }
+
+/* 읽기 줄 — 가나 + 한글 발음 + 뜻 */
+const readLine = w =>
+  `${esc(w.r)} <span class="krd">${kanaToKo(w.r)}</span> · ${esc(w.m)}`;
 
 const kata2hira = s => s.replace(/[ァ-ヶ]/g, c => String.fromCharCode(c.charCodeAt(0)-0x60));
 const normKana  = s => kata2hira(s).replace(/[\s ー・]/g,'');
@@ -929,7 +1003,7 @@ function endSession(){
   const box = $('r-wrong');
   $('r-wrongwrap').style.display = S.wrong.length ? '' : 'none';
   box.innerHTML = S.wrong.map(w =>
-    `<div><b class="jp">${w.w}<small style="color:var(--dim);font-weight:400"> ${w.r}</small></b><span>${w.m}</span></div>`).join('');
+    `<div><b class="jp">${esc(w.w)}<small style="color:var(--dim);font-weight:400"> ${esc(w.r)}</small></b><span>${esc(w.m)}</span></div>`).join('');
   if(S.score > (stats.best||0)){ stats.best = S.score }
   save(); syncURL();
   if(S.right/total >= .8) beep('win');
@@ -956,7 +1030,7 @@ function next(){
     qw.textContent = w.w;
     qw.classList.remove('ko');
     $('qhint').textContent = '탭해서 뒤집기';
-    $('qread').textContent = readLine(w);
+    $('qread').innerHTML = readLine(w);
     $('choices').style.display='none'; $('typebox').style.display='none'; $('qfoot').style.display='';
     $('timerbar').classList.add('hide');
     return;
@@ -1040,7 +1114,7 @@ function answer(ok, el, timeout){
 
   $('score').textContent = S.score;
   $('qcard').classList.add(ok?'flash-ok':'flash-bad');
-  $('qread').textContent = readLine(w);
+  $('qread').innerHTML = readLine(w);
   $('qread').classList.remove('hidden');
 
   if(S.kind==='quiz'){
@@ -1053,7 +1127,8 @@ function answer(ok, el, timeout){
   }else if(S.kind==='type'){
     const inp = $('typein'); inp.disabled = true; inp.classList.add(ok?'ok':'bad');
     $('verdict').innerHTML = ok ? '<b>정답!</b>'
-      : (timeout ? '<i>시간 초과</i> — ' : '<i>오답</i> — ') + (opt.input==='r' ? w.r : w.m);
+      : (timeout ? '<i>시간 초과</i> — ' : '<i>오답</i> — ')
+        + (opt.input==='r' ? `${esc(w.r)} <span class="krd">${kanaToKo(w.r)}</span>` : esc(w.m));
   }
   S.i++;
   setTimeout(next, ok ? 700 : 1500);
@@ -1291,9 +1366,9 @@ function renderDict(){
     const ex = EXAMPLES[w.w];
     return `<div class="dictitem${open?' open':''}">
       <div class="dictrow" data-k="${k}">
-        <div class="dhead"><span class="pill l${p.box}" title="${BOXNAME[p.box]}"></span><b class="jp">${w.w}</b></div>
-        <div class="rd jp">${w.r}</div>
-        <div class="mean">${w.m}</div>
+        <div class="dhead"><span class="pill l${p.box}" title="${BOXNAME[p.box]}"></span><b class="jp">${esc(w.w)}</b></div>
+        <div class="rd jp">${esc(w.r)}</div>
+        <div class="mean">${esc(w.m)}</div>
       </div>
       ${open ? `<div class="ex">${ ex
         ? `<div class="ja jp">${ex[0]}</div>
@@ -1331,6 +1406,7 @@ function renderCard(dir){
      <div class="inner">
        <div class="kanji jp">${esc(w.w)}</div>
        <div class="kana jp">${esc(w.r)}</div>
+       <div class="kanako">${kanaToKo(w.r)}</div>
        <div class="mean">${esc(w.m)}</div>
        <div class="rule"></div>
        ${ex ? `<div class="exj jp">${esc(ex[0])}</div>
@@ -1348,6 +1424,17 @@ const cardStep = d => { if(deck.length){ deckI += d; renderCard(d) } };
 
 $('dc-prev').onclick = ()=> cardStep(-1);
 $('dc-next').onclick = ()=> cardStep(1);
+/* 안다 / 모른다 — 퀴즈와 같은 채점 로직을 태우고 다음 카드로 */
+function cardMark(ok){
+  if(!deck.length) return;
+  const w = deck[deckI], pr = grade(key(w), ok);
+  save(); beep(ok ? 'ok' : 'bad');
+  toast(`${w.w} — ${ok ? BOXNAME[pr.box] : '처음부터 다시'}`);
+  cardStep(1);
+}
+$('dc-yes').onclick = ()=> cardMark(true);
+$('dc-no').onclick  = ()=> cardMark(false);
+
 $('dc-shuffle').onclick = ()=>{
   if(!deck.length) return;
   shuffle(deck); deckI = 0; renderCard(1); toast('다시 섞었어요');
@@ -1377,6 +1464,8 @@ document.addEventListener('keydown', e=>{
   if(e.target.tagName === 'INPUT') return;                 // 검색 중에는 방해하지 않는다
   if(e.key === 'ArrowRight'){ e.preventDefault(); cardStep(1) }
   if(e.key === 'ArrowLeft'){  e.preventDefault(); cardStep(-1) }
+  if(e.key === 'ArrowUp'){    e.preventDefault(); cardMark(true) }
+  if(e.key === 'ArrowDown'){  e.preventDefault(); cardMark(false) }
 });
 
 /* ══════════════════════════════════════════════════════════
@@ -1531,7 +1620,7 @@ function renderList(){
     const b = prg(key(w)).box;
     return `<div class="item">
       <span class="pill l${b}"></span>
-      <span class="w"><b class="jp">${w.w}</b><small class="jp">${w.r} · ${w.m}</small></span>
+      <span class="w"><b class="jp">${esc(w.w)}</b><small class="jp">${esc(w.r)} · ${esc(w.m)}</small></span>
       <span class="lv">${w.lv?'N'+w.lv:'MY'}</span>
       <button class="del" data-k="${key(w)}" aria-label="삭제"><svg class="i"><use href="#i-trash-2"/></svg></button></div>`;
   }).join('') + (list.length>400 ? '<div class="muted wide" style="padding:12px 0">…검색으로 좁혀보세요</div>' : '');
