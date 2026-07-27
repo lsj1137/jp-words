@@ -3,7 +3,22 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>単語 — 일본어 단어 게임</title>
+<meta name="description" content="일본어 N5·N4 단어를 게임처럼 외우는 웹앱. 4지선다·타이핑·플래시카드·간격 반복 복습.">
+<!-- 폰 주소창 색을 앱 배경에 맞춘다 (라이트/다크 각각) -->
+<meta name="theme-color" content="#0d0b0a" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f6f2ec" media="(prefers-color-scheme: light)">
+<!-- 홈 화면에 추가했을 때 전체화면 앱처럼 -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="単語">
+<!-- 링크 공유 미리보기 -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="単語 tango — 일본어 단어 게임">
+<meta property="og:description" content="일본어 N5·N4 단어를 게임처럼 외우는 웹앱. 4지선다·타이핑·플래시카드·간격 반복 복습.">
+<meta property="og:locale" content="ko_KR">
+<meta name="twitter:card" content="summary">
+<title>単語 tango — 일본어 단어 게임</title>
 <style>
   /* ══════════════════════════════════════════════════════════
      디자인 토큰 — 면은 '선'이 아니라 '명도 단계'로 구분한다.
@@ -229,8 +244,11 @@
        line-height:1.05; letter-spacing:-2px}
   .rgrid{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:22px 0}
   .wrongbox{background:var(--bg2); border-radius:var(--r);
-            padding:4px 15px; max-height:230px; overflow:auto}
-  .wrongbox div{display:flex; justify-content:space-between; gap:12px; padding:11px 0; font-size:14px}
+            padding:8px; max-height:230px; overflow:auto}
+  /* 구분선 대신 행마다 면을 줘서 좌우(단어↔뜻) 대응이 눈에 남게 */
+  .wrongbox div{display:flex; justify-content:space-between; align-items:center; gap:12px;
+                padding:11px 12px; font-size:14px; border-radius:9px; background:var(--card)}
+  .wrongbox div + div{margin-top:5px}
   .wrongbox span{color:var(--dim); text-align:right; flex:none}
 
   /* ---------- 관리 ---------- */
@@ -815,7 +833,12 @@ function romaji(s){
   const addJong = (s,j) => { const c=s.charCodeAt(s.length-1)-0xAC00;
     return (c<0||c>11171||c%28!==0) ? s : s.slice(0,-1)+String.fromCharCode(0xAC00+c+j) };
 
+  /* 인사말 끝의 は는 조사라 'わ(와)'로 읽는다 — 규칙으로는 판별할 수 없어 예외로 둔다.
+     (母 はは 처럼 진짜 は로 끝나는 낱말과 구별해야 한다) */
+  const KO_EXC = { 'こんにちは':'곤니치와', 'こんばんは':'곤반와' };
+
   function kanaToKo(kana){
+    if(KO_EXC[kana]) return KO_EXC[kana];
     const src = String(kana).replace(/[ァ-ヶ]/g, c=>String.fromCharCode(c.charCodeAt(0)-0x60));
     let out='', head=true, lastV='';
     for(let i=0;i<src.length;i++){
